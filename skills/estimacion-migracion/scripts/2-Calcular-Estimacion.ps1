@@ -39,6 +39,7 @@ $defectos = [ordered]@{
     'Contingencia dependencia externa' = 15; 'Contingencia componente IA' = 15
     'Soporte dev en certificación (h/día)' = 4; 'Ejecución QA (h/día)' = 6; 'Coordinación LT en certificación (h/día)' = 2
     'Hypercare dev (h/día por aplicativo)' = 2; 'Hypercare LT (h/día)' = 2; 'Módulos por lote' = 10
+    'Factor estrategia Migrar' = 1.0; 'Factor estrategia Refactorizar' = 0.7; 'Factor estrategia Reconstruir' = 1.3; 'Factor estrategia Reemplazar por estándar' = 0.5
 }
 function Par([string]$n) { return To-Num (Get-Val $ENT.parametros $n $defectos[$n]) $defectos[$n] }
 function ParTxt([string]$n, [string]$d) { return [string](Get-Val $ENT.parametros $n $d) }
@@ -357,12 +358,15 @@ foreach ($c in $compOrdenados) {
     }
     if (-not $tieneBC) { Add-CO 'CO-01' 'Preparar el aplicativo destino para recibir la funcionalidad' (@(8, 16, 24)[$i]) $c.complejidad }
     $prod = Par 'Productividad LOC/h (sin IA)'
+    # Factor por estrategia: multiplica solo la construcción CO-02..CO-06 (estrategia sin factor = 1)
+    $fe = $(if ($defectos.Contains("Factor estrategia $($c.estrategia)")) { Par "Factor estrategia $($c.estrategia)" } else { 1.0 })
+    $feTxt = $(if ($fe -ne 1) { " × $fe ($($c.estrategia))" } else { '' })
     $nCO2 = if ($tipo -eq 'Upgrade') { 'Adecuación de código (LOC afectadas)' } else { 'Implementar la lógica de negocio, cálculos y procesos' }
-    Add-CO 'CO-02' $nCO2 ($c.loc / $prod * $fcx) "$($c.loc) LOC / $prod × $fcx"
-    Add-CO 'CO-03' 'Implementar pantallas y navegación' ($c.pantallas * (Par "Horas por pantalla $($c.complejidad)")) "$($c.pantallas) pant."
-    Add-CO 'CO-04' 'Migrar estructuras de datos y parametrización (tablas, archivos, configuración)' ($c.tablas * (Par "Horas por tabla $($c.complejidad)")) "$($c.tablas) tablas"
-    Add-CO 'CO-05' 'Implementar integraciones y reemplazar automatizaciones del origen' ($c.integraciones * (Par "Horas por integración $($c.complejidad)")) "$($c.integraciones) integ."
-    Add-CO 'CO-06' 'Implementar reportes y salidas' ($c.reportes * (Par "Horas por reporte $($c.complejidad)")) "$($c.reportes) reportes"
+    Add-CO 'CO-02' $nCO2 ($c.loc / $prod * $fcx * $fe) "$($c.loc) LOC / $prod × $fcx$feTxt"
+    Add-CO 'CO-03' 'Implementar pantallas y navegación' ($c.pantallas * (Par "Horas por pantalla $($c.complejidad)") * $fe) "$($c.pantallas) pant.$feTxt"
+    Add-CO 'CO-04' 'Migrar estructuras de datos y parametrización (tablas, archivos, configuración)' ($c.tablas * (Par "Horas por tabla $($c.complejidad)") * $fe) "$($c.tablas) tablas$feTxt"
+    Add-CO 'CO-05' 'Implementar integraciones y reemplazar automatizaciones del origen' ($c.integraciones * (Par "Horas por integración $($c.complejidad)") * $fe) "$($c.integraciones) integ.$feTxt"
+    Add-CO 'CO-06' 'Implementar reportes y salidas' ($c.reportes * (Par "Horas por reporte $($c.complejidad)") * $fe) "$($c.reportes) reportes$feTxt"
     Add-CO 'CO-07' 'Manejo explícito de errores y externalización de rutas y secretos' ([Math]::Max(1, (Par '% Errores y secretos') / 100 * $sumCO26)) "% errores × Σ CO-02..06"
     if ($c.permisos) { Add-CO 'CO-08' 'Implementar permisos y auditoría' (@(4, 8, 12)[$i]) $c.complejidad }
     if ($c.migracion -ne 'Ninguna') { Add-CO 'CO-09' 'Scripts de migración/carga de datos e histórico' ($(if ($c.migracion -eq 'Compleja') { 24 } else { 8 })) $c.migracion }

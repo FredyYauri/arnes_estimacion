@@ -37,6 +37,8 @@ Los valores de la hoja `Parametros` de la entrada prevalecen sobre esta tabla (b
 | Hypercare dev (h/día por aplicativo) | 2 |
 | Hypercare LT (h/día) | 2 |
 | Incluir retiro del legacy | Sí |
+| Módulos por lote | 10 |
+| Factor estrategia Migrar / Refactorizar / Reconstruir / Reemplazar por estándar | 1,0 / 0,7 / 1,3 / 0,5 (multiplica CO-02..CO-06; valores iniciales a calibrar) |
 
 Las filas con "Baja / Media / Alta" corresponden en la hoja `Parametros` a tres parámetros separados (`Factor complejidad Baja`, `Factor complejidad Media`, …); las contingencias, a `Contingencia conocido`, `Contingencia integración`, etc.
 Si "Uso de asistente IA" = No, todos los factores IA = 1,0.
@@ -55,11 +57,11 @@ Si "Uso de asistente IA" = No, todos los factores IA = 1,0.
 | DI-02 | n_pant × (B 1 / M 2 / A 3) | Diseño |
 | DI-03 | n_tab × (B 0,5 / M 1 / A 2); + 4 si migración Compleja | Diseño |
 | CO-01 | B 8 / M 16 / A 24 | Construcción |
-| CO-02 | LOC / Productividad × fc (LOC es bloqueante en la entrada) | Construcción |
-| CO-03 | n_pant × Horas por pantalla(c) | Construcción |
-| CO-04 | n_tab × Horas por tabla(c) | Construcción |
-| CO-05 | n_int × Horas por integración(c) | Construcción |
-| CO-06 | n_rep × Horas por reporte(c) | Construcción |
+| CO-02 | LOC / Productividad × fc × fe (LOC es bloqueante en la entrada) | Construcción |
+| CO-03 | n_pant × Horas por pantalla(c) × fe | Construcción |
+| CO-04 | n_tab × Horas por tabla(c) × fe | Construcción |
+| CO-05 | n_int × Horas por integración(c) × fe | Construcción |
+| CO-06 | n_rep × Horas por reporte(c) × fe | Construcción |
 | CO-07 | % Errores y secretos × Σ(CO-02..CO-06), mín. 1 | Construcción |
 | CO-08 | B 4 / M 8 / A 12 | Construcción |
 | CO-09 | Simple 8 / Compleja 24 | Construcción |
@@ -68,6 +70,8 @@ Si "Uso de asistente IA" = No, todos los factores IA = 1,0.
 | PU-02 | % Ejecutar PU × Σ(CO-01..CO-09), mín. 2 (Upgrade: × 1,5) | Ejecutar PU |
 | DE-01 | B 2 / M 4 / A 8 | Manuales |
 | SE-01 | B 1 / M 2 / A 4 | Otros |
+
+`fe` = factor de la estrategia del componente (hoja Parametros, "Factor estrategia …"; Migrar 1,0 · Refactorizar 0,7 · Reconstruir 1,3 · Reemplazar por estándar 0,5).
 
 **Horas override** del Inventario: reemplaza Σ(02..05) del componente; repartir proporcionalmente a las horas paramétricas finales; origen `Entrada`.
 
