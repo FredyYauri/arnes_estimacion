@@ -6,6 +6,6 @@ argument-hint: "Ruta de la entrada completada, p. ej. Estimaciones/mi-proyecto/e
 Genera la estimación del proyecto a partir de la entrada: ${input:entrada:Ruta de Plantilla_Entrada_Estimacion.xlsx completada}
 
 Sigue el procedimiento completo del skill `estimacion-migracion` (pasos 1 a 13), sin saltarte la pre-validación ni la validación final.
-Si el pedido indica un número de olas, úsalo; si no, es una sola entrega.
+Si el pedido indica un número de olas, úsalo; si no, es una sola entrega. Si indica cómo agrupar los componentes en olas, respétalo; si pide que lo definas tú, aplica los criterios de priorización; si no lo dice, pregúntalo.
 Si faltan datos bloqueantes, pregúntalos todos juntos antes de calcular.
 Al terminar, entrega el resumen: KPIs, rango, equipo, oleadas e hitos, validaciones, supuestos clave, información faltante y preguntas para el cliente.

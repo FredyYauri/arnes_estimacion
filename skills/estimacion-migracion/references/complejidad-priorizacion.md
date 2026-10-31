@@ -43,11 +43,12 @@ Orden de prioridad (de mayor a menor) para asignar oleada y posición en la seri
 
 - **Cuántas olas**: las que pida el usuario. Si el pedido dice "en n olas" (o la entrada trae Modelo de entrega = Oleadas con "Número de olas" = n), se arman exactamente n olas y se guarda `numeroOlas: n` en `asignacion.json`. Si no se menciona, es **una sola entrega** (todo en "Ola 1"). El arnés no inventa ni parte olas por su cuenta.
 - Con n olas:
-  - Repartir los componentes entre la Ola 1 y la Ola n con los criterios de priorización; ninguna ola queda vacía.
+  - **Quién agrupa**: si el pedido (o la columna "Ola sugerida") dice qué componentes van en cada ola, esa agrupación **se respeta tal cual**. Si genera un conflicto (dependencia que va al revés, recurso sobrecargado), no se cambia: se informa y se pregunta. Si el pedido dice que la agrupación la define el arnés, se reparten los componentes con los criterios de priorización de abajo. Si no dice nada, se pregunta.
+  - Ninguna ola queda vacía.
   - Cada ola produce un entregable certificable (criterio de salida explícito en la Matriz de entregables).
   - Agrupar por aplicativo destino y patrones compartidos; un desarrollador hace en **serie** sus componentes de una ola (termina uno antes de iniciar el siguiente) y puede adelantar análisis/diseño de la ola siguiente mientras espera una revisión o dependencia.
   - Olas pueden solaparse si usan recursos distintos (frentes paralelos); la ola N+1 de un recurso comienza cuando ese recurso termina su ola N.
-  - Respetar "Ola sugerida" del Inventario salvo que viole una dependencia o la capacidad; si se cambia, explicar el motivo en "Motivo de la secuencia".
+  - En "Motivo de la secuencia" se indica si la ola la definió el usuario o el arnés (y con qué criterio).
 - Si "Agrupación de certificación y despliegue" = Pase único → certificaciones por ola/aplicativo y un solo despliegue al final; = Por ola → un bloque de certificación + despliegue + seguimiento por ola; = Por aplicativo destino → un bloque por aplicativo dentro de cada ola.
 
 ## Salidas de este paso

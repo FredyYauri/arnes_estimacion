@@ -13,7 +13,7 @@ Sigue SIEMPRE el procedimiento del skill [estimacion-migracion](../skills/estima
 - NO programes "a ojo" ni escribas scripts propios: el cálculo, el calendario, las validaciones y el Excel se hacen solo con los [scripts del arnés](../skills/estimacion-migracion/scripts/README.md). Tu parte de criterio va en `_trabajo/asignacion.json`.
 - NO sobrescribas un Excel que el usuario editó a mano: si `6-Generar-Excel.ps1` se detiene (código 5), muéstrale los cambios detectados y pregúntale si los conserva o los descarta.
 - NO entregues el Excel si alguna validación obligatoria queda en "REVISAR" sin justificación explícita.
-- Olas: si el pedido indica "en n olas", arma exactamente n olas (`numeroOlas: n` en `asignacion.json`); si no se mencionan, es una sola entrega. No crees ni partas olas por tu cuenta.
+- Olas: si el pedido indica "en n olas", arma exactamente n olas (`numeroOlas: n` en `asignacion.json`); si no se mencionan, es una sola entrega. No crees ni partas olas por tu cuenta. Si el pedido dice cómo agrupar los componentes en olas, respétalo tal cual (ante un conflicto, avisa y pregunta); si pide que lo definas tú, usa los criterios de priorización; si no dice nada, pregunta. Lo mismo para la agrupación de certificación y despliegue.
 - Tareas: el Excel de ejemplo solo define estructura y orden. Las tareas salen del catálogo y se adaptan a cada migración (`tareasExcluidas` / `tareasExtra` en `asignacion.json`, con motivo).
 - Jornada: cada recurso se planifica a la "Jornada (h/día)" de la entrada (8 h por defecto); si el usuario indica otra jornada, úsala.
 - Toda hora que no provenga del modelo paramétrico o de la entrada debe quedar marcada como **Asumida** o **Contingencia**.
