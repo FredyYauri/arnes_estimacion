@@ -15,18 +15,17 @@ argument-hint: 'Ruta de la entrada completada (Plantilla_Entrada_Estimacion.xlsx
 | Recurso | Uso |
 |---|---|
 | [Plantilla de entrada](./assets/Plantilla_Entrada_Estimacion.xlsx) | Se entrega al usuario para completar. Hojas: Instrucciones, Proyecto, Inventario, Recursos, Calendario, Restricciones, Riesgos, Parametros, Catalogos |
-| [Modelo de salida](./assets/Ejemplo_proyecto.xlsx) | Ejemplo real del Excel final (10 hojas): referencia de estructura, fórmulas, estilos y formatos condicionales. Solo lectura |
+| [Modelo de salida](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx) | Ejemplo real del Excel final (10 hojas): única referencia de estructura (hojas, columnas, nombres definidos), fórmulas, estilos y formatos condicionales. Solo lectura |
 | [Entradas](./references/entradas.md) | Campos bloqueantes, políticas precargadas, derivados y controles de la entrada (nada se supone) |
 | [Catálogo de fases y tareas](./references/catalogo-fases-tareas.md) | Fases 00-08, tareas base, WBS y dependencias estándar |
 | [Modelo de horas](./references/modelo-horas.md) | Fórmulas paramétricas, factor IA, redondeo, contingencia y origen de horas |
 | [Complejidad y priorización](./references/complejidad-priorizacion.md) | Puntaje de complejidad y armado de oleadas |
 | [Roles y capacidad](./references/roles-capacidad.md) | Catálogo de roles, capacidad diaria, matriz de asignación y equipo propuesto |
 | [Reglas de programación](./references/reglas-programacion.md) | Algoritmo del Gantt diario y reglas duras |
-| [Plantilla de salida](./references/plantilla-salida.md) | Hojas, columnas, fórmulas y estilos del Excel final (réplica de `Ejemplo_proyecto.xlsx`) |
 | [Validaciones](./references/validaciones.md) | Checklist obligatorio y cómo calcular cada control |
 | [Excel COM](./references/excel-com.md) | Reglas técnicas para leer/escribir Excel desde PowerShell 5.1 |
 
-El modelo de salida es [Ejemplo_proyecto.xlsx](./assets/Ejemplo_proyecto.xlsx) (en `assets/`). Solo lectura: sus datos son de otro proyecto y nunca se copian a una estimación nueva.
+El modelo de salida es [Ejemplo_proyecto.xlsx](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx) (en `assets/Ejemplos Salidas/`). Es la fuente de verdad de la estructura del Excel final: se replican sus hojas, columnas, fórmulas, nombres definidos y formatos. Solo lectura: sus datos son de otro proyecto y nunca se copian a una estimación nueva.
 
 ## Estructura de trabajo por proyecto
 
@@ -53,7 +52,7 @@ Si la salida ya existe, cópiala a `backup/` con sello de fecha antes de regener
 8. **Definir oleadas** con [complejidad-priorizacion](./references/complejidad-priorizacion.md): piloto y quick wins primero, componentes grandes temprano con recurso dedicado, agrupación por aplicativo destino y componentes reutilizables.
 9. **Programar** con [reglas-programacion](./references/reglas-programacion.md): generar `_trabajo/programar.ps1`, ejecutarlo y obtener `_trabajo/planning.json` (horas enteras por tarea y día hábil). Nunca asignar a mano.
 10. **Pre-validar** el `planning.json` con los controles de [validaciones](./references/validaciones.md) (capacidad, dependencias, continuidad, fases, totales). Si algo falla, corregir la causa (reasignar, reordenar o mover la oleada) y volver al paso 9.
-11. **Generar el Excel** `estimacion_<slug>.xlsx` según [plantilla-salida](./references/plantilla-salida.md) y [excel-com](./references/excel-com.md): 10 hojas, fórmulas vivas (SUMIF/WORKDAY/COUNTIF), nombres `FechaInicio` y `Feriados`, formatos condicionales por fase y por carga.
+11. **Generar el Excel** `estimacion_<slug>.xlsx` replicando la estructura del [modelo de salida](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx) y según [excel-com](./references/excel-com.md): 10 hojas, fórmulas vivas (SUMIF/WORKDAY/COUNTIF), nombres `FechaInicio` y `Feriados`, formatos condicionales por fase y por carga.
 12. **Validar el archivo final**: reabrir, recalcular (`Application.CalculateFull()`), leer la hoja Validaciones y confirmar que todo está en "OK" o justificado. Guardar el log en `_trabajo/validaciones.txt`.
 13. **Informar** al usuario: KPIs, rango de la estimación, equipo, oleadas e hitos, validaciones, supuestos clave, información faltante y preguntas abiertas.
 
