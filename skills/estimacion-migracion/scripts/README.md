@@ -75,6 +75,7 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
 - `componentes`: obligatorio para cada componente con tareas (`desarrollador` debe existir en Recursos o en `propuestos`). `ola` ("Ola 1".."Ola n") puede omitirse si viene "Ola sugerida" o si es una sola entrega.
 - Filas con "Módulos (n)" > 1 se parten en lotes `<ID>-L1..Lk`. `desarrolladores` reparte los lotes entre esas personas (uno por persona, en rueda); `lotes` fija la cantidad. Sin ninguno de los dos: ⌈n ÷ "Módulos por lote"⌉ con el `desarrollador` indicado. Un lote puede tener su propia entrada (`"APP2-L3": {...}`).
 - `tareasExcluidas` / `tareasExtra`: adaptan el catálogo a esta migración (ver [catálogo](../references/catalogo-fases-tareas.md#adaptar-el-catálogo-a-cada-migración)). `predecesoras` es opcional en las extra.
+- `gates`: opcional, solo si el pedido ajusta los gates del Resumen (G0 Inicio, G1 Análisis cerrado, G2 Diseño aprobado, G3 Listo para certificar, G4 Certificado, G5 Pase, G6 Cierre). Por código: `{ "G1": { "criterio": "...", "aprueba": "..." }, "G2": { "omitir": true } }`; `"G3"` aplica a todos los bloques, `"G3.2"` solo al bloque 2.
 - `roles`: opcional; si falta un rol, el script busca en Recursos según el catálogo (p. ej. sin Jefe de Proyecto, la gestión la toma el Líder Técnico).
 - `propuestos`: solo con autorización explícita del usuario (quedan marcados "Propuesto").
 

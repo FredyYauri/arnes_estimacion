@@ -198,27 +198,47 @@ foreach ($k in $noProgramadas) { $avisos.Add("No se pudo programar $k (revise di
 $ultimo = 0; foreach ($t in $TAREAS) { if ($t.fin -gt $ultimo) { $ultimo = $t.fin } }
 if ($ultimo -eq 0) { $ultimo = 1 }
 
-# ---------- Hitos ----------
+# ---------- Hitos (gates con criterio de salida) ----------
+# G0 Inicio · G1 Análisis cerrado · G2 Diseño aprobado · G3 Listo para certificar y G4 Certificado (por bloque)
+# · G5 Pase (por pase) · G6 Cierre (si hay hypercare). Ajustes del pedido: asignacion.json → gates
+# { "G1": { "criterio": "...", "aprueba": "..." }, "G2": { "omitir": true } } (la clave sin el sufijo de bloque aplica a todos).
+$ASIG = Read-JsonFile (Join-Path $Trabajo 'asignacion.json')
+$ajGates = Get-Val $ASIG 'gates' ([ordered]@{})
 $hitos = New-Object System.Collections.Generic.List[object]
-$prep = @($TAREAS | Where-Object { $_.fase -like '01*' } | ForEach-Object { $_.fin } | Measure-Object -Maximum).Maximum
-if ($prep) { $hitos.Add([ordered]@{ codigo = 'H0'; nombre = 'Preparación completa'; dia = [int]$prep; criterio = 'Entendimiento, relevamiento, ambientes y accesos listos' }) }
-$nb = 0
+function Fin-De($ts) { $m = @($ts | Where-Object { $_.fin -gt 0 } | ForEach-Object { $_.fin } | Measure-Object -Maximum).Maximum; if ($m) { return [int]$m }; return 0 }
+function Add-Gate([string]$cod, [string]$nombre, [int]$dia, [string]$criterio, [string]$aprueba) {
+    if ($dia -le 0) { return }
+    $base = ($cod -split '\.')[0]
+    foreach ($k in @($base, $cod)) {
+        $a = Get-Val $ajGates $k $null; if ($null -eq $a) { continue }
+        if (Is-Si ([string](Get-Val $a 'omitir' 'No')) -or (Get-Val $a 'omitir') -eq $true) { return }
+        $criterio = [string](Get-Val $a 'criterio' $criterio); $aprueba = [string](Get-Val $a 'aprueba' $aprueba); $nombre = [string](Get-Val $a 'nombre' $nombre)
+    }
+    $script:hitos.Add([ordered]@{ codigo = $cod; nombre = $nombre; dia = $dia; criterio = $criterio; aprueba = $aprueba })
+}
+Add-Gate 'G0' 'Inicio' (Fin-De @($TAREAS | Where-Object { $_.fase -like '01*' })) 'Accesos, ambientes y repositorios listos; alcance e inventario confirmados' 'Jefe de Proyecto + cliente'
+Add-Gate 'G1' 'Análisis cerrado' (Fin-De @($TAREAS | Where-Object { $_.fase -like '02*' })) 'Dependencias e incompatibilidades identificadas, reglas validadas con negocio, desvío de la re-estimación < 10 %' 'Líder Técnico'
+Add-Gate 'G2' 'Diseño aprobado' (Fin-De @($TAREAS | Where-Object { $_.fase -like '03*' })) 'Arquitectura, modelo de datos y prototipos aprobados' 'Arquitecto + cliente'
+$nb = 0; $varios = @($WBS.bloques).Count -gt 1
 foreach ($b in $WBS.bloques) {
-    $nb++
-    $pu = @($TAREAS | Where-Object { $b.componentes -contains $_.componente -and $_.codigo -eq 'PU-02' } | ForEach-Object { $_.fin } | Measure-Object -Maximum).Maximum
+    $nb++; $suf = $(if ($varios) { ".$nb" } else { '' })
+    $pu = Fin-De @($TAREAS | Where-Object { $b.componentes -contains $_.componente -and $_.codigo -eq 'PU-02' })
     $ce = @($TAREAS | Where-Object { $_.bloque -eq $b.nombre -and $_.fase -like '06*' })
     $ini = @($ce | Where-Object { $_.inicio -gt 0 -and $_.codigo -ne 'CE-01' } | ForEach-Object { $_.inicio } | Measure-Object -Minimum).Minimum
-    $fin = @($ce | ForEach-Object { $_.fin } | Measure-Object -Maximum).Maximum
+    $fin = Fin-De $ce
     $b['listo'] = [int]$pu; $b['inicioCert'] = [int]$ini; $b['finCert'] = [int]$fin
-    if ($pu) { $hitos.Add([ordered]@{ codigo = "H$nb"; nombre = "Listo para certificar – $($b.nombre)"; dia = [int]$pu; criterio = 'Pruebas unitarias del bloque terminadas' }) }
+    Add-Gate "G3$suf" "Listo para certificar – $($b.nombre)" $pu 'Código revisado, pruebas unitarias en verde y sin defectos críticos abiertos' 'Líder Técnico'
+    Add-Gate "G4$suf" "Certificado – $($b.nombre)" $fin 'Casos de QA ejecutados, 0 defectos bloqueantes y acta de certificación firmada' 'QA + negocio'
 }
-$np = 0
+$np = 0; $variosP = @($WBS.pases).Count -gt 1
 foreach ($pa in $WBS.pases) {
-    $np++
-    $de = @($TAREAS | Where-Object { $_.bloque -eq $pa.nombre -and $_.codigo -eq 'DE-04' } | ForEach-Object { $_.fin } | Measure-Object -Maximum).Maximum
+    $np++; $suf = $(if ($variosP) { ".$np" } else { '' })
+    $de = Fin-De @($TAREAS | Where-Object { $_.bloque -eq $pa.nombre -and $_.codigo -eq 'DE-04' })
     $pa['dia'] = [int]$de
-    if ($de) { $hitos.Add([ordered]@{ codigo = $(if ($WBS.pases.Count -gt 1) { "Pase$np" } else { 'Pase' }); nombre = "Pase a producción – $($pa.nombre)"; dia = [int]$de; criterio = 'Despliegue ejecutado y validado' }) }
+    Add-Gate "G5$suf" "Pase a producción – $($pa.nombre)" $de 'Despliegue validado en producción y plan de rollback probado' 'Jefe de Proyecto + operaciones'
+    Add-Gate "G6$suf" "Cierre – $($pa.nombre)" (Fin-De @($TAREAS | Where-Object { $_.bloque -eq $pa.nombre -and $_.fase -like '08*' })) 'Sin incidentes abiertos y transferencia a soporte firmada' 'Cliente'
 }
+$hitos = @($hitos | Sort-Object { [int]$_.dia })
 $diaHito = @{}; foreach ($h in $hitos) { $diaHito[[int]$h.dia] = $true }
 
 # ---------- Gestión distribuida (TRV-GES) ----------

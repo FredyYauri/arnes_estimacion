@@ -55,7 +55,7 @@ al terminar: programar TRV-GES (distribuida) y TRV-ACO (relleno)
   "fechaInicio": "2026-11-02",
   "feriados": ["2026-12-08", "2026-12-25"],
   "ultimoDia": 84,
-  "hitos": [{"codigo": "H0", "nombre": "Preparación completa", "dia": 10, "criterio": "..."}],
+  "hitos": [{"codigo": "G0", "nombre": "Inicio", "dia": 10, "criterio": "...", "aprueba": "Jefe de Proyecto + cliente"}],
   "leyenda": [{"aplicativoOrigen": "Warrants-Autom.xlsm", "color": "#BDD7EE"}, {"aplicativoOrigen": "Transversal", "color": "#E7E6E6"}],
   "recursos": [{"nombre": "Líder Técnico 1", "rol": "Líder Técnico", "cap": 5, "propuesto": true}],
   "tareas": [

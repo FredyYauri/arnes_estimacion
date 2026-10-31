@@ -121,10 +121,10 @@ try {
     $sup.Add(@('Base de horas', 'Modelo paramétrico del arnés con los parámetros de la entrada', "Productividad $(Get-Val $par 'Productividad LOC/h (sin IA)' 45) LOC/h; contingencia por componente (máx. 20 %)", 'Cierre de 02 Análisis', 'Re-estimar componentes afectados', 'Assumption'))
     $sup.Add(@('Capacidad', "Carga diaria por recurso: $(if ((Get-Val $par 'Carga diaria máxima' 'Jornada') -eq 'Jornada') { 'jornada del proyecto' } else { 'capacidad productiva del rol' }) ajustada por dedicación", "Jornada $($PROY.jornada) h; nadie supera su capacidad", 'Semanal', 'Mayor duración', 'Constraint'))
     $sup.Add(@('Calendario', 'Días hábiles desde la fecha de inicio, sin feriados ni vacaciones declarados', "Inicio $($PROY.fechaInicio); $(@($PLAN.feriados).Count) feriados", 'Kick-off', 'Desplazamiento de hitos', 'Constraint'))
-    $sup.Add(@('Preparación', 'Entendimiento (01.1) y relevamiento (01.2) agregados por el arnés', 'Horas marcadas como Asumida', 'H0', 'Retraso del inicio de análisis', 'Decision'))
+    $sup.Add(@('Preparación', 'Entendimiento (01.1) y relevamiento (01.2) agregados por el arnés', 'Horas marcadas como Asumida', 'G0', 'Retraso del inicio de análisis', 'Decision'))
     $sup.Add(@('Certificación', "Certificación a cargo de: $($PROY.certificacion)", "Mínimo $($PROY.diasCertMin) días hábiles por bloque", 'Inicio de 06', 'Mayor duración de certificación', 'Decision'))
-    if ($PROY.alcance -ne 'Certificación') { $sup.Add(@('Despliegue', "Agrupación: $($PROY.agrupacion)", 'Plan de pase, ensayo y ejecución por pase', 'Pase', 'Re-planificar ventanas', 'Decision')) }
-    if ($PROY.alcance -eq 'Hypercare') { $sup.Add(@('Seguimiento', 'Hypercare posterior al pase', "$($PROY.diasHyper) días hábiles", 'Pase', 'Soporte adicional', 'Decision')) }
+    if ($PROY.alcance -ne 'Certificación') { $sup.Add(@('Despliegue', "Agrupación: $($PROY.agrupacion)", 'Plan de pase, ensayo y ejecución por pase', 'G5', 'Re-planificar ventanas', 'Decision')) }
+    if ($PROY.alcance -eq 'Hypercare') { $sup.Add(@('Seguimiento', 'Hypercare posterior al pase', "$($PROY.diasHyper) días hábiles", 'G5', 'Soporte adicional', 'Decision')) }
     $sup.Add(@('Asignación', 'Un desarrollador principal por componente; revisión de código por el Líder Técnico', 'Ver hoja Equipo', 'Inicio de cada ola', 'Re-asignación y nueva programación', 'Decision'))
     $sup.Add(@('Secuencia', "Modelo de entrega: $($PROY.modelo)", 'Ver Estrategia de oleadas', 'Inicio de cada ola', 'Re-secuenciar', 'Decision'))
     if ($PROY.usaIA) { $sup.Add(@('Factores IA', 'Uso de asistente IA en el desarrollo', 'Factores por tipo de tarea de la hoja Parametros (sin calibrar hasta el piloto)', 'Fin del piloto (Ola 1)', 'Recalibrar factores y re-estimar', 'Assumption')) }
@@ -186,7 +186,7 @@ try {
     $rgCarga = $ws.Range("K2:${LC}$($nR + 1)")
     Add-CF $rgCarga '=K2>$G2' '#FFC7CE' '#9C0006'; Add-CF $rgCarga '=K2=$G2' '#C6EFCE' '#006100'; Add-CF $rgCarga '=(K2>0)*(K2<$G2)' '#FFEB9C' '#9C5700'
     $fH = $bloque + 4; Set-Cell $ws $fH 10 'Hitos >>'
-    foreach ($h in $PLAN.hitos) { Set-Cell $ws $fH (10 + [int]$h.dia) $h.codigo }
+    foreach ($g in @($PLAN.hitos | Group-Object { [int]$_.dia })) { Set-Cell $ws $fH (10 + [int]$g.Name) ((@($g.Group | ForEach-Object { $_.codigo })) -join ' ') }
     Add-CF $ws.Range("K${fH}:${LC}${fH}") "=K$fH<>`"`"" '#070F26' '#FFC400'
     Set-Cell $ws ($bloque + 5) 10 'Semanas >>'
     for ($d = 1; $d -le $ND; $d += 5) { Set-Cell $ws ($bloque + 5) (10 + $d) ('S' + ([Math]::Floor(($d - 1) / 5) + 1)) }
@@ -381,14 +381,14 @@ try {
     function Add-Rsk($cat, $txt, $evid, $p, $im, $estr, $mit, $resp, $hito) { $script:i++; $id = 'RSK-{0:D3}' -f $script:i; $script:rsk[$id] = @($id, $cat, $txt, $evid, $p, $im, (Expo $p $im), $estr, $mit, $resp, $hito, 'Abierto') }
     foreach ($x in $ENT.riesgos) { Add-Rsk (Get-Val $x 'Categoría' '') (Get-Val $x 'Riesgo / dependencia' '') (Get-Val $x 'Evidencia / disparador' 'Entrada') (Get-Val $x 'Probabilidad' 'Media') (Get-Val $x 'Impacto' 'Media') 'Mitigar' (Get-Val $x 'Mitigación propuesta' '') (Get-Val $x 'Responsable' '') '' }
     foreach ($c in $WBS.componentes) {
-        if ($c.faltante) { Add-Rsk 'Alcance' "Información faltante en $($c.id): $($c.faltante)" 'Inventario' 'Media' 'Media' 'Mitigar' 'Validar con el cliente antes del análisis del componente' $WBS.lider 'H0' }
+        if ($c.faltante) { Add-Rsk 'Alcance' "Información faltante en $($c.id): $($c.faltante)" 'Inventario' 'Media' 'Media' 'Mitigar' 'Validar con el cliente antes del análisis del componente' $WBS.lider 'G0' }
         if ($c.dependencia -eq 'Crítica') { Add-Rsk 'Dependencias' "Dependencia externa crítica en $($c.id)" 'Inventario' 'Alta' 'Alta' 'Mitigar' 'Confirmar fecha y responsable de la dependencia' $WBS.lider '' }
     }
     $hDev = @{}; $totDev = 0; foreach ($t in $TAREAS) { if ($t.fase -match '^0[2-5] ') { $hDev[$t.recurso] = [int]$hDev[$t.recurso] + [int]$t.horas; $totDev += [int]$t.horas } }
     foreach ($k in $hDev.Keys) { if ($totDev -gt 0 -and $hDev[$k] / $totDev -gt 0.4 -and $hDev.Count -gt 1) { Add-Rsk 'Capacidad' "Concentración de trabajo en $k ($([Math]::Round(100 * $hDev[$k] / $totDev)) % de 02-05)" 'Planning' 'Media' 'Alta' 'Mitigar' 'Evaluar un segundo recurso o redistribuir componentes' $WBS.lider '' } }
     if ($PROY.usaIA) { Add-Rsk 'AI-SDLC' 'Factores IA sin calibrar con datos reales' 'Parametros' 'Media' 'Media' 'Mitigar' 'Medir en el piloto (Ola 1) y recalibrar' $WBS.lider 'H1' }
     if ($PROY.certificacion -eq 'QA cliente') { Add-Rsk 'Calidad' 'Certificación a cargo del cliente: disponibilidad de su QA' 'Proyecto' 'Media' 'Alta' 'Transferir' 'Acordar calendario de certificación con el cliente' '' '' }
-    if ($PROY.ambientes -notmatch 'Certificación|QA') { Add-Rsk 'Técnico' 'No se declaró ambiente de certificación/QA' 'Proyecto' 'Media' 'Alta' 'Mitigar' 'Confirmar ambientes antes de 06 Certificación' '' 'H0' }
+    if ($PROY.ambientes -notmatch 'Certificación|QA') { Add-Rsk 'Técnico' 'No se declaró ambiente de certificación/QA' 'Proyecto' 'Media' 'Alta' 'Mitigar' 'Confirmar ambientes antes de 06 Certificación' '' 'G0' }
     foreach ($id in (Get-Val $filasMan 'Riesgos' ([ordered]@{})).Keys) { $f = $filasMan['Riesgos'][$id]; $rsk[$id] = @($encR | ForEach-Object { [string](Get-Val $f $_ '') }); $rsk[$id][0] = $id }
     $fila = 4; foreach ($id in $rsk.Keys) { Set-Row $ws $fila 1 $rsk[$id]; $fila++ }
     if ($fila -gt 4) {
@@ -466,10 +466,10 @@ try {
     $fila++; Style-Sub $ws $fila 'Horas por plataforma'; $fila++; Style-Header $ws $fila 1 @('Plataforma', 'Horas'); $fila++; $fi = $fila
     foreach ($pl in @($TAREAS | ForEach-Object { $_.plataforma } | Where-Object { $_ } | Sort-Object -Unique)) { Set-Row $ws $fila 1 @($pl, "=SUMIF($dhF,A$fila,$dhM)"); $fila++ }
     Style-Borders $ws $fi 1 ($fila - 1) 2
-    $fila++; Style-Sub $ws $fila 'Hitos principales'; $fila++; Style-Header $ws $fila 1 @('Hito', 'Criterio de salida', 'Día hábil', 'Fecha'); $fila++; $fi = $fila
-    foreach ($h in $PLAN.hitos) { Set-Row $ws $fila 1 @("$($h.codigo) – $($h.nombre)", $h.criterio, [int]$h.dia, "=WORKDAY(FechaInicio,C$fila-1,Feriados)"); $fila++ }
-    Set-Row $ws $fila 1 @('Cierre', 'Fin del plan', $ND, "=WORKDAY(FechaInicio,C$fila-1,Feriados)"); $fila++
-    $ws.Range("D${fi}:D$fila").NumberFormat = 'dd/mm/yyyy'; Style-Borders $ws $fi 1 ($fila - 1) 4
+    $fila++; Style-Sub $ws $fila 'Hitos y gates (criterio de salida para pasar a la fase siguiente)'; $fila++; Style-Header $ws $fila 1 @('Gate', 'Criterio de salida', 'Día hábil', 'Fecha', 'Aprueba'); $fila++; $fi = $fila
+    foreach ($h in $PLAN.hitos) { Set-Row $ws $fila 1 @("$($h.codigo) – $($h.nombre)", $h.criterio, [int]$h.dia, "=WORKDAY(FechaInicio,C$fila-1,Feriados)", [string]$h.aprueba); $fila++ }
+    Set-Row $ws $fila 1 @('Fin del plan', 'Última tarea programada', $ND, "=WORKDAY(FechaInicio,C$fila-1,Feriados)", ''); $fila++
+    $ws.Range("D${fi}:D$fila").NumberFormat = 'dd/mm/yyyy'; Style-Borders $ws $fi 1 ($fila - 1) 5
     $fila++; Style-Sub $ws $fila 'Supuestos y riesgos relevantes'; $fila++
     $vi = @(); foreach ($id in @($filasSup.Keys | Select-Object -First 4)) { $vi += "$id $($filasSup[$id][2])" }; foreach ($id in @($rsk.Keys | Select-Object -First 4)) { $vi += "$id $($rsk[$id][2])" }
     foreach ($x in $vi) { Set-Cell $ws $fila 1 "• $x"; $fila++ }
