@@ -39,9 +39,9 @@ Orden de prioridad (de mayor a menor) para asignar oleada y posición en la seri
 
 ## Armado de oleadas
 
-- Si "Modelo de entrega" = Entrega única → una sola ola ("Ola 1").
-- Si = Oleadas:
-  - Cada ola dura como máximo "Duración máxima de ola (semanas)" de construcción + pruebas (defecto 8).
+- **Cuántas olas**: las que pida el usuario. Si el pedido dice "en n olas" (o la entrada trae Modelo de entrega = Oleadas con "Número de olas" = n), se arman exactamente n olas y se guarda `numeroOlas: n` en `asignacion.json`. Si no se menciona, es **una sola entrega** (todo en "Ola 1"). El arnés no inventa ni parte olas por su cuenta.
+- Con n olas:
+  - Repartir los componentes entre la Ola 1 y la Ola n con los criterios de priorización; ninguna ola queda vacía.
   - Cada ola produce un entregable certificable (criterio de salida explícito en la Matriz de entregables).
   - Agrupar por aplicativo destino y patrones compartidos; un desarrollador hace en **serie** sus componentes de una ola (termina uno antes de iniciar el siguiente) y puede adelantar análisis/diseño de la ola siguiente mientras espera una revisión o dependencia.
   - Olas pueden solaparse si usan recursos distintos (frentes paralelos); la ola N+1 de un recurso comienza cuando ese recurso termina su ola N.

@@ -103,6 +103,10 @@ Test-Lista 'Proyecto' '' 'La estimación llega hasta' (Get-Val $p 'La estimació
 Test-Lista 'Proyecto' '' 'Modelo de entrega' (Get-Val $p 'Modelo de entrega') 'Modelo de entrega'
 Test-Lista 'Proyecto' '' 'Agrupación de certificación y despliegue' (Get-Val $p 'Agrupación de certificación y despliegue') 'Agrupación cert./despliegue'
 Test-Lista 'Proyecto' '' 'Certificación a cargo de' (Get-Val $p 'Certificación a cargo de') 'Certificación a cargo de'
+if ((Get-Val $p 'Modelo de entrega') -eq 'Oleadas') {
+    $no = Get-Val $p 'Número de olas'
+    if ($null -eq $no -or (To-Num $no 0) -lt 2) { $avisos.Add('Modelo de entrega = Oleadas sin "Número de olas" (≥ 2): tomarlo del pedido o confirmar con el usuario; si no se indica, es una sola entrega.') }
+}
 $fi = Get-Val $p 'Fecha tentativa de inicio'; $fo = Get-Val $p 'Fecha objetivo (comprometida o deseada)'
 if ($fi -and $fo -and ($fo -lt $fi)) { Add-Faltante 'Proyecto' '' 'Fecha objetivo' 'Es anterior a la fecha de inicio' }
 

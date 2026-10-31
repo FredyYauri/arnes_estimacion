@@ -37,7 +37,7 @@ $defectos = [ordered]@{
     'Contingencia conocido' = 3; 'Contingencia integración' = 8; 'Contingencia requerimientos poco claros' = 15
     'Contingencia dependencia externa' = 15; 'Contingencia componente IA' = 15
     'Soporte dev en certificación (h/día)' = 4; 'Ejecución QA (h/día)' = 6; 'Coordinación LT en certificación (h/día)' = 2
-    'Hypercare dev (h/día por aplicativo)' = 2; 'Hypercare LT (h/día)' = 2; 'Duración máxima de ola (semanas)' = 8
+    'Hypercare dev (h/día por aplicativo)' = 2; 'Hypercare LT (h/día)' = 2
 }
 function Par([string]$n) { return To-Num (Get-Val $ENT.parametros $n $defectos[$n]) $defectos[$n] }
 function ParTxt([string]$n, [string]$d) { return [string](Get-Val $ENT.parametros $n $d) }
@@ -49,7 +49,14 @@ $tipoProyecto = [string](Get-Val $PROY 'Tipo de trabajo' 'Migración')
 $alcance = [string](Get-Val $PROY 'La estimación llega hasta' 'Producción')
 $alcanceProd = $alcance -in @('Producción', 'Hypercare')
 $alcanceHyper = $alcance -eq 'Hypercare'
-$modelo = [string](Get-Val $PROY 'Modelo de entrega' 'Oleadas')
+# Olas: si el pedido indica n olas, el agente lo pone en asignacion.numeroOlas (manda sobre la entrada).
+# Si no se pidió nada, es una sola entrega.
+$nOlas = Get-Val $ASIG 'numeroOlas'
+if ($null -eq $nOlas) {
+    $nOlas = if ([string](Get-Val $PROY 'Modelo de entrega' 'Entrega única') -eq 'Oleadas') { Get-Val $PROY 'Número de olas' 1 } else { 1 }
+}
+$nOlas = [int](To-Num $nOlas 1); if ($nOlas -lt 1) { $nOlas = 1 }
+$modelo = if ($nOlas -gt 1) { 'Oleadas' } else { 'Entrega única' }
 $agrupacion = [string](Get-Val $PROY 'Agrupación de certificación y despliegue' 'Por ola')
 $certA = [string](Get-Val $PROY 'Certificación a cargo de' 'QA proveedor')
 $qaProveedor = $certA -in @('QA proveedor', 'Mixta')
@@ -58,7 +65,8 @@ $claridad = [string](Get-Val $PROY 'Claridad de requerimientos' 'Media')
 $diasCertMin = [int](To-Num (Get-Val $PROY 'Duración mínima de certificación (días hábiles)' 5) 5)
 $diasHyper = [int](To-Num (Get-Val $PROY 'Duración de hypercare (días hábiles)' 5) 5)
 $redondeo4 = Is-Si (ParTxt 'Redondeo a bloques de 4 h' 'No')
-$cargaJornada = (ParTxt 'Carga diaria máxima' 'Capacidad productiva del rol') -eq 'Jornada'
+# Por defecto cada recurso se planifica a la jornada completa; "Capacidad productiva del rol" es opcional.
+$cargaJornada = (ParTxt 'Carga diaria máxima' 'Jornada') -eq 'Jornada'
 $retiroLegacy = Is-Si (ParTxt 'Incluir retiro del legacy' 'Sí')
 
 $FASES = [ordered]@{
@@ -155,8 +163,11 @@ foreach ($r in $ENT.inventario) {
     $ac = Get-Val $asigComp $id ([ordered]@{})
     $ola = Get-Val $ac 'ola'
     if (-not $ola) { $os = Get-Val $r 'Ola sugerida'; if ($os) { $ola = $(if ([string]$os -match '^\d+$') { "Ola $os" } else { [string]$os }) } }
-    if (-not $ola -and $modelo -eq 'Entrega única') { $ola = 'Ola 1' }
     if ($modelo -eq 'Entrega única') { $ola = 'Ola 1' }
+    elseif ($ola) {
+        $nO = $(if ([string]$ola -match '\d+') { [int]$Matches[0] } else { 0 })
+        if ($nO -lt 1 -or $nO -gt $nOlas) { $errores.Add("Componente ${id}: '$ola' fuera de las $nOlas olas pedidas.") } else { $ola = "Ola $nO" }
+    }
     $tieneTareas = $est -ne 'Mantener'
     $dev = Get-Val $ac 'desarrollador'
     if ($tieneTareas -and -not $ola) { $errores.Add("Componente $id sin ola (asignacion.componentes.$id.ola).") }
@@ -379,6 +390,7 @@ foreach ($c in @($compTrab)) {
 # ---------- Bloques de certificación / despliegue / seguimiento ----------
 $bloques = New-Object System.Collections.Generic.List[object]
 $olas = @($compT | ForEach-Object { $_.ola } | Sort-Object { [int]($_ -replace '\D', '') } -Unique)
+if ($olas.Count -lt $nOlas) { Write-Warning "Se pidieron $nOlas olas pero solo $($olas.Count) tienen componentes." }
 foreach ($ola in $olas) {
     $cs = @($compT | Where-Object { $_.ola -eq $ola })
     if ($agrupacion -eq 'Por aplicativo destino') {
@@ -488,10 +500,10 @@ $wbs = [ordered]@{
     generado    = (Get-Date).ToString('yyyy-MM-dd HH:mm')
     proyecto    = [ordered]@{
         nombre = [string](Get-Val $PROY 'Nombre del proyecto' ''); cliente = [string](Get-Val $PROY 'Cliente / área solicitante' ''); tipo = $tipoProyecto
-        alcance = $alcance; modelo = $modelo; agrupacion = $agrupacion; certificacion = $certA; sensibles = $sensibles; claridad = $claridad
+        alcance = $alcance; modelo = $modelo; numeroOlas = $nOlas; agrupacion = $agrupacion; certificacion = $certA; sensibles = $sensibles; claridad = $claridad
         fechaInicio = (Get-Val $PROY 'Fecha tentativa de inicio'); fechaObjetivo = (Get-Val $PROY 'Fecha objetivo (comprometida o deseada)')
         jornada = $jornada; sabado = ((Get-Val $PROY 'Días laborables' '') -eq 'Lunes a sábado'); usaIA = $usaIA; version = [string](Get-Val $PROY 'Versión de la estimación' 'v1')
-        diasCertMin = $diasCertMin; diasHyper = $diasHyper; duracionMaxOla = (Par 'Duración máxima de ola (semanas)')
+        diasCertMin = $diasCertMin; diasHyper = $diasHyper
         tarifas = (Is-Si (Get-Val $PROY 'Tarifas por rol disponibles (costeo)' 'No')); moneda = [string](Get-Val $PROY 'Moneda' '')
         fueraAlcance = [string](Get-Val $PROY 'Fuera de alcance' ''); alcanceResumen = [string](Get-Val $PROY 'Alcance (resumen)' ''); objetivo = [string](Get-Val $PROY 'Objetivo' '')
         ambientes = [string](Get-Val $PROY 'Ambientes disponibles' '')

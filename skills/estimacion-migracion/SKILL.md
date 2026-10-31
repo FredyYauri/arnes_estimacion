@@ -47,8 +47,8 @@ Todo el cálculo lo hacen los [scripts del arnés](./scripts/README.md); el agen
 2. **Leer y validar la entrada**: `scripts/1-Leer-Entrada.ps1` la lee en solo lectura, la vuelca a `_trabajo/entrada.json` y aplica los controles de [entradas](./references/entradas.md).
 3. **Faltantes**: si el script sale con código 2, devolver la tabla de `_trabajo/faltantes.json` (Hoja · Fila/ID · Campo · Problema) y **detenerse**; ningún dato del proyecto se supone. Si informa cobertura de recursos insuficiente, preguntar si esperar o dimensionar el equipo.
 4. **Asignar** los recursos de la entrada con [roles-capacidad](./references/roles-capacidad.md). Si Recursos no cubre lo necesario, preguntar; solo con autorización explícita dimensionar el equipo y marcarlo "Propuesto".
-5. **Definir oleadas** con [complejidad-priorizacion](./references/complejidad-priorizacion.md): piloto y quick wins primero, componentes grandes temprano con recurso dedicado, agrupación por aplicativo destino y componentes reutilizables. Con "Entrega única" todo va en la Ola 1.
-6. **Guardar las decisiones** de los pasos 4 y 5 en `_trabajo/asignacion.json` (formato en [scripts](./scripts/README.md#asignacionjson-lo-arma-el-agente)): ola, desarrollador y orden de cada componente, responsables por rol, recursos Propuestos autorizados, actividades reutilizables y criterios de secuenciación. Es el único paso de criterio del agente.
+5. **Definir olas** con [complejidad-priorizacion](./references/complejidad-priorizacion.md): si el usuario pidió n olas, repartir los componentes en exactamente n olas (piloto y quick wins primero, componentes grandes temprano con recurso dedicado, agrupación por aplicativo destino y componentes reutilizables); si no lo mencionó, es una sola entrega y todo va en la Ola 1.
+6. **Guardar las decisiones** de los pasos 4 y 5 en `_trabajo/asignacion.json` (formato en [scripts](./scripts/README.md#asignacionjson-lo-arma-el-agente)): número de olas (`numeroOlas`), ola, desarrollador y orden de cada componente, responsables por rol, recursos Propuestos autorizados, actividades reutilizables y criterios de secuenciación. Es el único paso de criterio del agente.
 7. **Calcular** con `scripts/2-Calcular-Estimacion.ps1`: clasifica la complejidad ([complejidad-priorizacion](./references/complejidad-priorizacion.md), respetando "Complejidad forzada"), arma el WBS ([catalogo-fases-tareas](./references/catalogo-fases-tareas.md): preparación 01.1/01.2, transversales, base común, certificación/despliegue/seguimiento según la agrupación; *Retirar* solo genera retiro y *Mantener* no genera tareas) y calcula horas ([modelo-horas](./references/modelo-horas.md): base → factor IA → redondeo → contingencia en fila separada, con origen `Paramétrica`, `Entrada`, `Asumida` o `Contingencia`). La hoja `Parametros` de la entrada prevalece sobre la referencia.
 8. **Ajustes del usuario**: si existe `_trabajo/ajustes.json` (cambios manuales que el usuario decidió conservar), los scripts 2 y 3 los aplican automáticamente.
 9. **Programar**: `scripts/3-Programar.ps1` aplica [reglas-programacion](./references/reglas-programacion.md) y escribe `_trabajo/planning.json` (horas enteras por tarea y día hábil). Nunca asignar a mano.
@@ -59,7 +59,7 @@ Todo el cálculo lo hacen los [scripts del arnés](./scripts/README.md); el agen
 
 ## Reglas que nunca se rompen
 
-- Ningún recurso supera su carga diaria máxima (por defecto, la capacidad productiva del rol; tope absoluto 8 h).
+- Ningún recurso supera su carga diaria máxima (por defecto, la Jornada del proyecto: 8 h/día, configurable).
 - Una tarea iniciada se ejecuta de corrido hasta terminar (sin días vacíos en su ejecución).
 - Ninguna tarea inicia antes de que terminen sus predecesoras.
 - Toda funcionalidad incluye análisis, diseño, construcción y pruebas unitarias.

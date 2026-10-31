@@ -49,6 +49,7 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
 
 ```json
 {
+  "numeroOlas": 1,
   "componentes": {
     "M01": { "ola": "Ola 1", "desarrollador": "Ana", "orden": 1, "motivo": "Piloto de la plataforma Web .NET", "revisor": "Luis", "componenteIA": false }
   },
@@ -65,7 +66,8 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
 }
 ```
 
-- `componentes`: obligatorio para cada componente con tareas (`desarrollador` debe existir en Recursos o en `propuestos`). `ola` puede omitirse si viene "Ola sugerida" o si el modelo es Entrega única.
+- `numeroOlas`: cuántas olas pidió el usuario. Si no se mencionaron olas, `1` (una sola entrega, todo en "Ola 1"). Manda sobre "Modelo de entrega" / "Número de olas" de la entrada.
+- `componentes`: obligatorio para cada componente con tareas (`desarrollador` debe existir en Recursos o en `propuestos`). `ola` ("Ola 1".."Ola n") puede omitirse si viene "Ola sugerida" o si es una sola entrega.
 - `roles`: opcional; si falta un rol, el script busca en Recursos según el catálogo (p. ej. sin Jefe de Proyecto, la gestión la toma el Líder Técnico).
 - `propuestos`: solo con autorización explícita del usuario (quedan marcados "Propuesto").
 

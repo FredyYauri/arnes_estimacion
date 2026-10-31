@@ -30,10 +30,11 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Ambientes disponibles | B | Riesgo si no hay Certificación/QA |
 | Fecha tentativa de inicio | B | `FechaInicio` |
 | Fecha objetivo | Op | Holgura o brecha contra el fin estimado |
-| Jornada (h/día) | P | Tope absoluto diario |
+| Jornada (h/día) | P | Horas por recurso y día (defecto 8, configurable). Carga diaria planificada y tope absoluto |
 | Días laborables | P | `WORKDAY` |
 | Uso de asistente IA en el desarrollo | P | Activa factores IA |
-| Modelo de entrega | P | Oleadas / Entrega única |
+| Modelo de entrega | P | Entrega única (defecto) / Oleadas. Si el pedido indica n olas, manda el pedido |
+| Número de olas | Op | Solo con Oleadas (≥ 2). Vacío o 1 = una sola entrega |
 | Agrupación de certificación y despliegue | P | Por ola / Por aplicativo destino / Pase único |
 | Certificación a cargo de | P | QA proveedor / QA cliente / Mixta |
 | Duración mínima de certificación (días hábiles) | P | Regla de certificación |

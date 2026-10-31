@@ -46,7 +46,6 @@ al terminar: programar TRV-GES (distribuida) y TRV-ACO (relleno)
 ## Balanceo y ajustes (iterar antes de generar el Excel)
 
 - Fecha objetivo incumplida → (a) mover componentes del recurso más cargado a otro con la misma plataforma, (b) informar la brecha y recomendar recursos adicionales (solo se agregan si el usuario lo autoriza). Nunca subir la carga diaria por encima del tope.
-- Ola que excede su duración máxima → partirla en dos olas.
 - Recurso con > 20 % de días sin carga en su ventana → reasignar o acortar su ventana (entra cuando hay trabajo y sale al terminar).
 
 ## Formato de `planning.json`

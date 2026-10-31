@@ -29,14 +29,13 @@ Los valores de la hoja `Parametros` de la entrada prevalecen sobre esta tabla (b
 | % Ejecutar PU | 15 |
 | Contingencia conocido / integración / requerimientos poco claros / dependencia externa / componente IA | 3 / 8 / 15 / 15 / 15 |
 | Redondeo a bloques de 4 h | No |
-| Carga diaria máxima | Capacidad productiva del rol |
+| Carga diaria máxima | Jornada (cada recurso a la jornada del proyecto, 8 h por defecto) |
 | Acompañamiento LT en días libres | No |
 | Soporte dev en certificación (h/día) | 4 |
 | Ejecución QA (h/día) | 6 |
 | Coordinación LT en certificación (h/día) | 2 |
 | Hypercare dev (h/día por aplicativo) | 2 |
 | Hypercare LT (h/día) | 2 |
-| Duración máxima de ola (semanas) | 8 |
 | Incluir retiro del legacy | Sí |
 
 Las filas con "Baja / Media / Alta" corresponden en la hoja `Parametros` a tres parámetros separados (`Factor complejidad Baja`, `Factor complejidad Media`, …); las contingencias, a `Contingencia conocido`, `Contingencia integración`, etc.

@@ -83,17 +83,11 @@ foreach ($b in $PLAN.bloques) {
 }
 Add-Control 13 'Certificación por bloque con duración mínima' ($nB - $malB.Count) "$nB" ($malB.Count -eq 0) ($malB -join '; ')
 
-# 14 Olas: entregable y duración máxima de construcción + pruebas
-$maxSem = To-Num $WBS.proyecto.duracionMaxOla 8; $malO = @()
+# 14 Olas: tantas como se pidieron (1 = entrega única), cada una con componentes
+$nOlas = [int](To-Num $WBS.proyecto.numeroOlas 1)
 $olas = @($TAREAS | Where-Object { $_.ola -match '^Ola' } | ForEach-Object { $_.ola } | Sort-Object -Unique)
-foreach ($o in $olas) {
-    $cp = @($TAREAS | Where-Object { $_.ola -eq $o -and $_.fase -match '^0[45] ' -and $_.inicio -gt 0 })
-    if ($cp.Count -eq 0) { continue }
-    $ini = ($cp | ForEach-Object { $_.inicio } | Measure-Object -Minimum).Minimum; $fin = ($cp | ForEach-Object { $_.fin } | Measure-Object -Maximum).Maximum
-    $sem = [Math]::Round(($fin - $ini + 1) / 5.0, 1)
-    if ($sem -gt $maxSem) { $malO += "$o dura $sem semanas (máx. $maxSem)" }
-}
-Add-Control 14 'Las oleadas generan entregables periódicos' $olas.Count "$($olas.Count) olas, ninguna > $maxSem semanas" ($malO.Count -eq 0) ($malO -join '; ')
+$faltan = @(1..$nOlas | Where-Object { $olas -notcontains "Ola $_" } | ForEach-Object { "Ola $_ sin tareas" })
+Add-Control 14 'Las olas coinciden con lo pedido' $olas.Count "$nOlas" ($olas.Count -eq $nOlas -and $faltan.Count -eq 0) ($faltan -join '; ')
 
 # 15 Días sin carga de desarrolladores dentro de su ventana
 $sinCarga = 0; $ventana = 0; $det = @()

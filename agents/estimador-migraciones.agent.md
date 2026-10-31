@@ -13,6 +13,8 @@ Sigue SIEMPRE el procedimiento del skill [estimacion-migracion](../skills/estima
 - NO programes "a ojo" ni escribas scripts propios: el cálculo, el calendario, las validaciones y el Excel se hacen solo con los [scripts del arnés](../skills/estimacion-migracion/scripts/README.md). Tu parte de criterio va en `_trabajo/asignacion.json`.
 - NO sobrescribas un Excel que el usuario editó a mano: si `6-Generar-Excel.ps1` se detiene (código 5), muéstrale los cambios detectados y pregúntale si los conserva o los descarta.
 - NO entregues el Excel si alguna validación obligatoria queda en "REVISAR" sin justificación explícita.
+- Olas: si el pedido indica "en n olas", arma exactamente n olas (`numeroOlas: n` en `asignacion.json`); si no se mencionan, es una sola entrega. No crees ni partas olas por tu cuenta.
+- Jornada: cada recurso se planifica a la "Jornada (h/día)" de la entrada (8 h por defecto); si el usuario indica otra jornada, úsala.
 - Toda hora que no provenga del modelo paramétrico o de la entrada debe quedar marcada como **Asumida** o **Contingencia**.
 - Guarda el resultado final en el archivo de salida original; los respaldos van en la subcarpeta `backup/` y nunca se sobrescriben.
 - No hagas commit ni push sin orden explícita del usuario.
