@@ -66,7 +66,7 @@ Se crea cuando un aplicativo destino recibe ≥2 componentes o es **Nuevo**. Ola
 
 Dependencia: BC-03/BC-04 terminan antes de la construcción de los componentes de ese aplicativo; BC-06 antes de sus pruebas unitarias.
 
-## Tareas por componente (estrategia Migrar / Refactorizar / Reconstruir / Reemplazar)
+## Tareas por componente (estrategia Migrar / Refactorizar / Reconstruir / Reemplazar por estándar)
 
 Nombre en Planning: `<Tarea> (<ID componente>)`.
 

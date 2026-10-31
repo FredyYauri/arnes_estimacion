@@ -60,7 +60,7 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Aplicativo destino | B | |
 | Destino existente o nuevo | B | |
 | Plataforma destino | B | Texto libre: la indica el pedido o el documento de arquitectura/diseño. La lista de Catalogos es solo sugerencia |
-| Estrategia | B | Migrar / Refactorizar / Reconstruir / Reemplazar / Retirar / Mantener |
+| Estrategia | B | Migrar / Refactorizar / Reconstruir / Reemplazar por estándar / Retirar / Mantener (lista de Catalogos) |
 | Tipo de trabajo | Op | Vacío = hereda el tipo de trabajo del proyecto (regla, no suposición) |
 | Prioridad de negocio (1-3) | Op | Vacío = sin prioridad diferencial (no altera la secuencia) |
 | Ola sugerida | Op | Vacío = la define el arnés |
