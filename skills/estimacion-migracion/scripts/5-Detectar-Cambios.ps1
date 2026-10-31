@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Compara el Excel de estimación actual con el snapshot de la última generación y lista lo que el usuario
   cambió a mano. Con -Aplicar, guarda esos cambios en ajustes.json para que sobrevivan a la regeneración.

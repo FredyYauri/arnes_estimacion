@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Paso 2-3 del procedimiento: lee la entrada (solo lectura), la vuelca a _trabajo/entrada.json
   y ejecuta los controles de references/entradas.md.

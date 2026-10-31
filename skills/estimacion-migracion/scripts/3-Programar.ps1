@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Paso 9 del procedimiento: programa el Gantt diario (references/reglas-programacion.md) a partir de wbs.json.
   Nunca se asignan horas a mano: las tareas "fijadas" en ajustes.json se respetan tal cual y el resto

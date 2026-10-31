@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Pasos 11-12 del procedimiento: genera estimacion_<slug>.xlsx replicando la estructura del modelo de salida
   (assets/Ejemplos Salidas/Ejemplo_proyecto.xlsx), recalcula y deja un snapshot para detectar cambios manuales.

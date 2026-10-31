@@ -1,4 +1,4 @@
-# Funciones compartidas por los scripts del arnés (PowerShell 5.1, Windows, Excel COM).
+﻿# Funciones compartidas por los scripts del arnés (PowerShell 5.1, Windows, Excel COM).
 # Se carga con:  . (Join-Path $PSScriptRoot 'Comun.ps1')
 
 

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Pasos 4-8 del procedimiento: clasifica complejidad, arma el WBS y calcula horas con el modelo
   paramétrico (references/modelo-horas.md y catalogo-fases-tareas.md). Todo cálculo es determinístico:

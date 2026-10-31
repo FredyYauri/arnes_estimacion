@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
   Paso 10 del procedimiento: pre-valida planning.json con los controles de references/validaciones.md.
 .OUTPUTS
