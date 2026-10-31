@@ -109,6 +109,9 @@ function Open-Excel {
     $xl.Visible = $false
     $xl.DisplayAlerts = $false
     $xl.ScreenUpdating = $false
+    # Seguridad: los archivos que se abren (entradas del cliente, Excel editados) nunca ejecutan macros ni eventos.
+    $xl.AutomationSecurity = 3   # msoAutomationSecurityForceDisable
+    $xl.EnableEvents = $false
     return $xl
 }
 
@@ -168,11 +171,27 @@ function ConvertTo-BGR([string]$Hex) {
 }
 
 # Escribe un valor en una celda según las reglas de excel-com.md.
+# Seguridad (inyección de fórmulas): solo se escriben como fórmula las que usan funciones de cálculo de esta lista,
+# sin vínculos a otros libros ([...]) ni DDE (|). Cualquier otro texto que empiece con = + - @ (p. ej. un dato del
+# cliente como "=WEBSERVICE(...)" o "=cmd|...") se escribe como texto literal.
+$script:FuncionesPermitidas = @('SUM', 'SUMIF', 'SUMIFS', 'SUMPRODUCT', 'COUNT', 'COUNTA', 'COUNTIF', 'COUNTIFS', 'COUNTBLANK',
+    'IF', 'IFERROR', 'AND', 'OR', 'NOT', 'MAX', 'MIN', 'AVERAGE', 'ROUND', 'ROUNDUP', 'ROUNDDOWN', 'INT', 'ABS',
+    'WORKDAY', 'NETWORKDAYS', 'MATCH', 'INDEX', 'LOOKUP', 'VLOOKUP', 'TEXT', 'LEN')
+function Test-FormulaSegura([string]$f) {
+    if ($f -match '[\[|]') { return $false }
+    $sinTextos = $f -replace '"[^"]*"', '""'
+    foreach ($m in [regex]::Matches($sinTextos, '([A-Za-z][A-Za-z0-9\._]*)\s*\(')) {
+        if ($script:FuncionesPermitidas -notcontains $m.Groups[1].Value.ToUpper()) { return $false }
+    }
+    return $true
+}
 function Set-Cell($ws, [int]$Fila, [int]$Col, $Valor) {
     $c = $ws.Cells.Item($Fila, $Col)
     if ($null -eq $Valor) { return }
     if ($Valor -is [string]) {
-        if ($Valor.StartsWith('=')) { $c.Formula = $Valor } else { $c.Value2 = [string]$Valor }
+        if ($Valor.StartsWith('=') -and (Test-FormulaSegura $Valor)) { $c.Formula = $Valor }
+        elseif ($Valor -match '^[=+\-@]') { $c.Value2 = "'" + $Valor }
+        else { $c.Value2 = [string]$Valor }
     }
     elseif ($Valor -is [bool]) { $c.Value2 = [string]$Valor }
     else { $c.Formula = ([double]$Valor).ToString($Inv) }

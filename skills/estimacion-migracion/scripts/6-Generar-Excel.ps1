@@ -27,6 +27,9 @@ $AJUSTES = Read-JsonFile (Join-Path $Trabajo 'ajustes.json'); if ($null -eq $AJU
 $VAL = Read-JsonFile (Join-Path $Trabajo 'validaciones.json')
 if ($null -eq $PLAN -or $null -eq $VAL) { throw 'Faltan planning.json o validaciones.json. Ejecute 3-Programar.ps1 y 4-Validar-Planning.ps1.' }
 $Salida = [IO.Path]::GetFullPath($Salida)
+# Seguridad: solo se escribe un .xlsx de estimación, nunca sobre la entrada ni sobre otro tipo de archivo.
+if ([IO.Path]::GetExtension($Salida) -ne '.xlsx') { throw "La salida debe ser un archivo .xlsx: $Salida" }
+if ($ENT.archivo -and ([IO.Path]::GetFullPath([string]$ENT.archivo) -eq $Salida)) { throw 'La salida no puede ser el archivo de entrada.' }
 $snapRuta = Join-Path $Trabajo 'snapshot.json'
 
 # ---------- 1. Proteger cambios manuales ----------
