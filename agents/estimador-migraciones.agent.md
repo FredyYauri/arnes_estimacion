@@ -10,7 +10,8 @@ Sigue SIEMPRE el procedimiento del skill [estimacion-migracion](../skills/estima
 ## Restricciones
 - NO modifiques el archivo de entrada del usuario ni el modelo de salida `.github/skills/estimacion-migracion/assets/Ejemplos Salidas/Ejemplo_proyecto.xlsx`: ábrelos solo en lectura.
 - NO supongas datos del proyecto (aplicativos, tecnologías, LOC, pantallas, integraciones, tablas, recursos, calendario): si falta alguno, detente y pídelo. Solo lo que el usuario declare en "Información faltante o por validar" se trata como contingencia, riesgo y pregunta al cliente.
-- NO programes "a ojo": el calendario diario se calcula con un script generado en `_trabajo/` siguiendo [reglas de programación](../skills/estimacion-migracion/references/reglas-programacion.md).
+- NO programes "a ojo" ni escribas scripts propios: el cálculo, el calendario, las validaciones y el Excel se hacen solo con los [scripts del arnés](../skills/estimacion-migracion/scripts/README.md). Tu parte de criterio va en `_trabajo/asignacion.json`.
+- NO sobrescribas un Excel que el usuario editó a mano: si `6-Generar-Excel.ps1` se detiene (código 5), muéstrale los cambios detectados y pregúntale si los conserva o los descarta.
 - NO entregues el Excel si alguna validación obligatoria queda en "REVISAR" sin justificación explícita.
 - Toda hora que no provenga del modelo paramétrico o de la entrada debe quedar marcada como **Asumida** o **Contingencia**.
 - Guarda el resultado final en el archivo de salida original; los respaldos van en la subcarpeta `backup/` y nunca se sobrescriben.

@@ -24,6 +24,7 @@ argument-hint: 'Ruta de la entrada completada (Plantilla_Entrada_Estimacion.xlsx
 | [Reglas de programación](./references/reglas-programacion.md) | Algoritmo del Gantt diario y reglas duras |
 | [Validaciones](./references/validaciones.md) | Checklist obligatorio y cómo calcular cada control |
 | [Excel COM](./references/excel-com.md) | Reglas técnicas para leer/escribir Excel desde PowerShell 5.1 |
+| [Scripts](./scripts/README.md) | Scripts fijos que calculan, programan, validan y generan el Excel, y protegen los cambios manuales del usuario |
 
 El modelo de salida es [Ejemplo_proyecto.xlsx](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx) (en `assets/Ejemplos Salidas/`). Es la fuente de verdad de la estructura del Excel final: se replican sus hojas, columnas, fórmulas, nombres definidos y formatos. Solo lectura: sus datos son de otro proyecto y nunca se copian a una estimación nueva.
 
@@ -35,25 +36,25 @@ Estimaciones/<slug-proyecto>/
 ├── entrada_<slug>.xlsx          # copia de la entrada completada (no se modifica)
 ├── estimacion_<slug>.xlsx       # salida final (siempre el mismo nombre)
 ├── backup/                      # versiones previas: estimacion_<slug>_<yyyyMMdd_HHmm>.xlsx
-└── _trabajo/                    # entrada.json, wbs.json, planning.json, scripts generados, log de validaciones
+└── _trabajo/                    # entrada.json, asignacion.json, ajustes.json, wbs.json, planning.json, validaciones, snapshot.json
 ```
 
-Si la salida ya existe, cópiala a `backup/` con sello de fecha antes de regenerarla (no sobrescribir respaldos existentes).
+Todo el cálculo lo hacen los [scripts del arnés](./scripts/README.md); el agente no escribe scripts propios ni asigna horas a mano. Si la salida ya existe, `6-Generar-Excel.ps1` la respalda en `backup/` y **se detiene si el usuario la editó a mano** hasta que decida conservar o descartar esos cambios.
 
 ## Procedimiento
 
 1. **Preparar carpeta** con la estructura anterior. Copiar la entrada a `entrada_<slug>.xlsx` si viene de otra ubicación.
-2. **Leer la entrada** en modo solo lectura (Excel COM, ver [excel-com](./references/excel-com.md)) y volcarla a `_trabajo/entrada.json`.
-3. **Validar la entrada** según [entradas](./references/entradas.md): bloqueantes, políticas, listas, coherencia de fechas y recursos. Cualquier faltante → devolver la tabla de faltantes y **detenerse**; ningún dato del proyecto se supone.
-4. **Clasificar complejidad** de cada componente del Inventario con [complejidad-priorizacion](./references/complejidad-priorizacion.md). Respetar "Complejidad forzada" si viene informada.
-5. **Construir el WBS** con [catalogo-fases-tareas](./references/catalogo-fases-tareas.md): Proyecto → Oleada → Aplicativo destino → Componente → Fase → Tarea. Incluir siempre: preparación (01.1/01.2), transversales (02/03), base común por aplicativo destino cuando aplique, y certificación/despliegue/seguimiento según la agrupación elegida. Componentes con estrategia *Retirar* solo generan tareas de retiro; *Mantener* no genera tareas.
-6. **Calcular horas** con [modelo-horas](./references/modelo-horas.md): horas base → factor IA → redondeo hacia arriba a entero → contingencia (fila separada). Etiquetar el origen de cada hora: `Paramétrica`, `Entrada`, `Asumida` o `Contingencia`. Los valores de la hoja `Parametros` de la entrada prevalecen sobre los de la referencia.
-7. **Asignar** los recursos de la entrada con [roles-capacidad](./references/roles-capacidad.md). Si Recursos no cubre lo necesario, preguntar; solo con autorización explícita dimensionar el equipo y marcarlo "Propuesto".
-8. **Definir oleadas** con [complejidad-priorizacion](./references/complejidad-priorizacion.md): piloto y quick wins primero, componentes grandes temprano con recurso dedicado, agrupación por aplicativo destino y componentes reutilizables.
-9. **Programar** con [reglas-programacion](./references/reglas-programacion.md): generar `_trabajo/programar.ps1`, ejecutarlo y obtener `_trabajo/planning.json` (horas enteras por tarea y día hábil). Nunca asignar a mano.
-10. **Pre-validar** el `planning.json` con los controles de [validaciones](./references/validaciones.md) (capacidad, dependencias, continuidad, fases, totales). Si algo falla, corregir la causa (reasignar, reordenar o mover la oleada) y volver al paso 9.
-11. **Generar el Excel** `estimacion_<slug>.xlsx` replicando la estructura del [modelo de salida](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx) y según [excel-com](./references/excel-com.md): 10 hojas, fórmulas vivas (SUMIF/WORKDAY/COUNTIF), nombres `FechaInicio` y `Feriados`, formatos condicionales por fase y por carga.
-12. **Validar el archivo final**: reabrir, recalcular (`Application.CalculateFull()`), leer la hoja Validaciones y confirmar que todo está en "OK" o justificado. Guardar el log en `_trabajo/validaciones.txt`.
+2. **Leer y validar la entrada**: `scripts/1-Leer-Entrada.ps1` la lee en solo lectura, la vuelca a `_trabajo/entrada.json` y aplica los controles de [entradas](./references/entradas.md).
+3. **Faltantes**: si el script sale con código 2, devolver la tabla de `_trabajo/faltantes.json` (Hoja · Fila/ID · Campo · Problema) y **detenerse**; ningún dato del proyecto se supone. Si informa cobertura de recursos insuficiente, preguntar si esperar o dimensionar el equipo.
+4. **Asignar** los recursos de la entrada con [roles-capacidad](./references/roles-capacidad.md). Si Recursos no cubre lo necesario, preguntar; solo con autorización explícita dimensionar el equipo y marcarlo "Propuesto".
+5. **Definir oleadas** con [complejidad-priorizacion](./references/complejidad-priorizacion.md): piloto y quick wins primero, componentes grandes temprano con recurso dedicado, agrupación por aplicativo destino y componentes reutilizables. Con "Entrega única" todo va en la Ola 1.
+6. **Guardar las decisiones** de los pasos 4 y 5 en `_trabajo/asignacion.json` (formato en [scripts](./scripts/README.md#asignacionjson-lo-arma-el-agente)): ola, desarrollador y orden de cada componente, responsables por rol, recursos Propuestos autorizados, actividades reutilizables y criterios de secuenciación. Es el único paso de criterio del agente.
+7. **Calcular** con `scripts/2-Calcular-Estimacion.ps1`: clasifica la complejidad ([complejidad-priorizacion](./references/complejidad-priorizacion.md), respetando "Complejidad forzada"), arma el WBS ([catalogo-fases-tareas](./references/catalogo-fases-tareas.md): preparación 01.1/01.2, transversales, base común, certificación/despliegue/seguimiento según la agrupación; *Retirar* solo genera retiro y *Mantener* no genera tareas) y calcula horas ([modelo-horas](./references/modelo-horas.md): base → factor IA → redondeo → contingencia en fila separada, con origen `Paramétrica`, `Entrada`, `Asumida` o `Contingencia`). La hoja `Parametros` de la entrada prevalece sobre la referencia.
+8. **Ajustes del usuario**: si existe `_trabajo/ajustes.json` (cambios manuales que el usuario decidió conservar), los scripts 2 y 3 los aplican automáticamente.
+9. **Programar**: `scripts/3-Programar.ps1` aplica [reglas-programacion](./references/reglas-programacion.md) y escribe `_trabajo/planning.json` (horas enteras por tarea y día hábil). Nunca asignar a mano.
+10. **Pre-validar**: `scripts/4-Validar-Planning.ps1` ejecuta los controles de [validaciones](./references/validaciones.md). Si algo queda en REVISAR, corregir la causa en `asignacion.json` (reasignar, reordenar o mover la oleada) y volver al paso 7.
+11. **Generar el Excel**: `scripts/6-Generar-Excel.ps1` escribe `estimacion_<slug>.xlsx` replicando la estructura del [modelo de salida](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx): 10 hojas, fórmulas vivas (SUMIF/WORKDAY/COUNTIF), nombres `FechaInicio` y `Feriados`, formatos condicionales por fase y por carga. Si sale con código 5, el usuario editó el Excel: mostrarle `_trabajo/cambios_manuales.json` y preguntar si conserva (`5-Detectar-Cambios.ps1 -Aplicar` y repetir pasos 7 a 11) o descarta (`-DescartarCambios`). Nunca regenerar sobre cambios del usuario sin su respuesta.
+12. **Validar el archivo final**: el script recalcula, lee la hoja Validaciones e informa cuántas quedan en REVISAR; toda REVISAR debe quedar justificada en la columna Detalle.
 13. **Informar** al usuario: KPIs, rango de la estimación, equipo, oleadas e hitos, validaciones, supuestos clave, información faltante y preguntas abiertas.
 
 ## Reglas que nunca se rompen

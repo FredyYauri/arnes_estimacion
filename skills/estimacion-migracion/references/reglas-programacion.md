@@ -1,6 +1,6 @@
 # Reglas de programación (Gantt diario)
 
-El calendario se calcula con un script PowerShell generado en `_trabajo/programar.ps1` que lee `_trabajo/wbs.json` y escribe `_trabajo/planning.json`. **Nunca** asignar horas diarias manualmente.
+El calendario lo calcula el script fijo [`scripts/3-Programar.ps1`](../scripts/3-Programar.ps1), que lee `_trabajo/wbs.json` y escribe `_trabajo/planning.json`. **Nunca** asignar horas diarias manualmente; las únicas horas por día que se respetan tal cual son las tareas fijadas por el usuario en `ajustes.json` (ver [scripts](../scripts/README.md)).
 
 ## Reglas duras
 

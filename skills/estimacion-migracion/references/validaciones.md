@@ -44,4 +44,4 @@ certificación: días(06 del bloque) ≥ días_cert ; inicio(06) > fin(PU-02 del
 totales: Σ planning == Σ detalle ; Σ por origen consistente
 ```
 
-Guardar el resultado en `_trabajo/validaciones.txt` (control, valor, esperado, estado) y resumirlo en la respuesta final.
+Los controles los ejecuta [`scripts/4-Validar-Planning.ps1`](../scripts/4-Validar-Planning.ps1). Guardar el resultado en `_trabajo/validaciones.txt` (control, valor, esperado, estado) y resumirlo en la respuesta final.
