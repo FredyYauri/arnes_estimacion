@@ -20,7 +20,7 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 |---|---|---|
 | Nombre del proyecto | B | Títulos, slug del archivo |
 | Cliente / área solicitante | Op | Resumen |
-| Tipo de trabajo | B | Migración / Upgrade / Mejora evolutiva |
+| Tipo de trabajo | B | Migración (otra tecnología) / Upgrade (misma tecnología, nueva versión) / Mejora evolutiva. Se puede indicar distinto por fila en Inventario |
 | Objetivo | B | Resumen |
 | Alcance (resumen) | B | Resumen |
 | Fuera de alcance | Op | Hoja Supuestos (como exclusión declarada) |

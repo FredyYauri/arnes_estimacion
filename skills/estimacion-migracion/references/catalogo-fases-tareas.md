@@ -108,7 +108,14 @@ Se permite agrupar en una sola fila tareas del mismo componente, fase y recurso 
 
 Estrategia **Retirar**: solo AN-02 (confirmar retiro con negocio) y SE-01. Estrategia **Mantener**: sin tareas (se lista en Estrategia de oleadas con 0 h).
 Tipo **Mejora evolutiva**: usar las mismas tareas; LOC = líneas a crear o modificar; AN-01 se reduce a la mitad (no hay código origen que extraer).
-Tipo **Upgrade** (versión de framework/plataforma): AN-01 = inventario de dependencias incompatibles; CO-02 = adecuación de código (LOC afectadas); agregar PU de regresión (PU-02 × 1,5).
+**Misma tecnología o distinta** (lo indica el pedido o el documento, por componente o por capa):
+
+| Caso | Ejemplo | Tipo de trabajo | Estrategia habitual | Qué cambia |
+|---|---|---|---|---|
+| Misma tecnología, nueva versión | .NET Framework → .NET 8, Java 8 → Java 21, Angular.js → Angular | Upgrade | Refactorizar (o Migrar si se reescribe mucho) | AN-01 = inventario de dependencias y APIs incompatibles; CO-02 = adecuación de código sobre las LOC afectadas (si no se conocen, LOC totales con el factor de la estrategia); pruebas de regresión: PU-02 × 1,5 |
+| Distinta tecnología | .NET → Java, VB6 → .NET, COBOL → Java, ASP.NET WebForms → Angular | Migración | Migrar o Reconstruir | AN-01 = análisis completo del origen; CO-02 = reescritura de la lógica (LOC totales) |
+
+Un mismo aplicativo puede tener ambos casos (p. ej. front WebForms → Angular = Migración y back .NET Framework → .NET 8 = Upgrade): va una fila por destino, cada una con su tipo de trabajo. Si el pedido no deja claro cuál aplica, se pregunta.
 
 ## Tareas por bloque de certificación/despliegue
 
