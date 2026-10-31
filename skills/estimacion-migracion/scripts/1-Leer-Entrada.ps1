@@ -130,7 +130,7 @@ foreach ($r in $entradaJson.inventario) {
         }
     }
     if ($id) { if ($ids.ContainsKey($id)) { Add-Faltante 'Inventario' "$fila / $id" 'ID' 'ID duplicado' } else { $ids[$id] = $true } }
-    Test-Lista 'Inventario' "$fila / $id" 'Plataforma destino' (Get-Val $r 'Plataforma destino') 'Plataformas destino'
+    # Plataforma destino es texto libre (viene del pedido o del documento); no se valida contra Catalogos.
     Test-Lista 'Inventario' "$fila / $id" 'Estrategia' $est 'Estrategias'
     Test-Lista 'Inventario' "$fila / $id" 'Destino existente o nuevo' (Get-Val $r 'Destino existente o nuevo') 'Destino'
     Test-Lista 'Inventario' "$fila / $id" 'Migración de datos' (Get-Val $r 'Migración de datos') 'Migración de datos'

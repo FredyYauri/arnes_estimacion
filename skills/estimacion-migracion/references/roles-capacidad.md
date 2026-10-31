@@ -43,6 +43,8 @@
 | iOS / Android | Developer iOS/Android Sr | Developer iOS/Android Ssr |
 | Datos (ETL, carga, BD) | Data Engineer Sr | Data Engineer Medium |
 
+**Plataforma no listada** (la plataforma destino viene del pedido o del documento, p. ej. Angular, Java, microfrontends, nube): rol `Developer <plataforma> Sr` para Alta y `Developer <plataforma> Ssr` para Baja/Media, con la misma capacidad que los developers de la tabla. Se asigna a quien tenga esa plataforma en "Plataformas / skills".
+
 Si solo hay un nivel disponible en Recursos, usar ese y registrar la diferencia como riesgo si la complejidad no coincide.
 
 ## Matriz de asignación por fase (R = responsable, A = apoyo/revisión)
