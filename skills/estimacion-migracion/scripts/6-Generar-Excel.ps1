@@ -119,7 +119,7 @@ try {
     $par = $WBS.parametros
     $sup = New-Object System.Collections.Generic.List[object]
     $sup.Add(@('Base de horas', 'Modelo paramétrico del arnés con los parámetros de la entrada', "Productividad $(Get-Val $par 'Productividad LOC/h (sin IA)' 45) LOC/h; contingencia por componente (máx. 20 %)", 'Cierre de 02 Análisis', 'Re-estimar componentes afectados', 'Assumption'))
-    $sup.Add(@('Capacidad', 'Carga diaria por recurso según capacidad productiva del rol y dedicación', "Jornada $($PROY.jornada) h; nadie supera su capacidad", 'Semanal', 'Mayor duración', 'Constraint'))
+    $sup.Add(@('Capacidad', "Carga diaria por recurso: $(if ((Get-Val $par 'Carga diaria máxima' 'Jornada') -eq 'Jornada') { 'jornada del proyecto' } else { 'capacidad productiva del rol' }) ajustada por dedicación", "Jornada $($PROY.jornada) h; nadie supera su capacidad", 'Semanal', 'Mayor duración', 'Constraint'))
     $sup.Add(@('Calendario', 'Días hábiles desde la fecha de inicio, sin feriados ni vacaciones declarados', "Inicio $($PROY.fechaInicio); $(@($PLAN.feriados).Count) feriados", 'Kick-off', 'Desplazamiento de hitos', 'Constraint'))
     $sup.Add(@('Preparación', 'Entendimiento (01.1) y relevamiento (01.2) agregados por el arnés', 'Horas marcadas como Asumida', 'H0', 'Retraso del inicio de análisis', 'Decision'))
     $sup.Add(@('Certificación', "Certificación a cargo de: $($PROY.certificacion)", "Mínimo $($PROY.diasCertMin) días hábiles por bloque", 'Inicio de 06', 'Mayor duración de certificación', 'Decision'))
@@ -128,6 +128,7 @@ try {
     $sup.Add(@('Asignación', 'Un desarrollador principal por componente; revisión de código por el Líder Técnico', 'Ver hoja Equipo', 'Inicio de cada ola', 'Re-asignación y nueva programación', 'Decision'))
     $sup.Add(@('Secuencia', "Modelo de entrega: $($PROY.modelo)", 'Ver Estrategia de oleadas', 'Inicio de cada ola', 'Re-secuenciar', 'Decision'))
     if ($PROY.usaIA) { $sup.Add(@('Factores IA', 'Uso de asistente IA en el desarrollo', 'Factores por tipo de tarea de la hoja Parametros (sin calibrar hasta el piloto)', 'Fin del piloto (Ola 1)', 'Recalibrar factores y re-estimar', 'Assumption')) }
+    foreach ($x in @($WBS.excluidas)) { if ($x) { $sup.Add(@('Tarea excluida', "$($x.tarea) ($($x.clave))", $(if ($x.motivo) { $x.motivo } else { 'No aplica a esta migración' }), 'Kick-off', "Re-incluir ($($x.horas) h)", 'Decision')) } }
     if ($PROY.fueraAlcance) { $sup.Add(@('Exclusión', 'Fuera de alcance declarado en la entrada', $PROY.fueraAlcance, 'Kick-off', 'Cambio de alcance', 'Constraint')) }
     $filasSup = [ordered]@{}; $i = 0
     foreach ($s in $sup) { $i++; $id = 'ASM-{0:D3}' -f $i; $filasSup[$id] = @($id) + $s }

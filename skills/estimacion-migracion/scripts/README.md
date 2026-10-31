@@ -63,6 +63,10 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
     { "nombre": "Developer .NET Ssr 1", "rol": "Developer .NET Ssr", "plataformas": "Web .NET", "dedicacion": 100 }
   ],
   "reutilizables": [ { "actividad": "Servicio de notificaciones", "componentes": "M01, M04", "aprovechamiento": "M01 lo construye; M04 lo reutiliza" } ],
+  "tareasExcluidas": [ { "clave": "M01|DI-02", "motivo": "Las pantallas se migran sin rediseño" } ],
+  "tareasExtra": [
+    { "componente": "M02", "codigo": "EX-01", "fase": "04", "tarea": "Convertir jobs JCL a pipelines", "horas": 24, "recurso": "Ana", "origen": "Asumida", "motivo": "Pedido del cliente" }
+  ],
   "criterios": [ "Piloto por plataforma en la Ola 1", "Componentes Alta con desarrollador dedicado desde el inicio" ]
 }
 ```
@@ -70,6 +74,7 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
 - `numeroOlas`: cuántas olas pidió el usuario. Si no se mencionaron olas, `1` (una sola entrega, todo en "Ola 1"). Manda sobre "Modelo de entrega" / "Número de olas" de la entrada.
 - `componentes`: obligatorio para cada componente con tareas (`desarrollador` debe existir en Recursos o en `propuestos`). `ola` ("Ola 1".."Ola n") puede omitirse si viene "Ola sugerida" o si es una sola entrega.
 - Filas con "Módulos (n)" > 1 se parten en lotes `<ID>-L1..Lk`. `desarrolladores` reparte los lotes entre esas personas (uno por persona, en rueda); `lotes` fija la cantidad. Sin ninguno de los dos: ⌈n ÷ "Módulos por lote"⌉ con el `desarrollador` indicado. Un lote puede tener su propia entrada (`"APP2-L3": {...}`).
+- `tareasExcluidas` / `tareasExtra`: adaptan el catálogo a esta migración (ver [catálogo](../references/catalogo-fases-tareas.md#adaptar-el-catálogo-a-cada-migración)). `predecesoras` es opcional en las extra.
 - `roles`: opcional; si falta un rol, el script busca en Recursos según el catálogo (p. ej. sin Jefe de Proyecto, la gestión la toma el Líder Técnico).
 - `propuestos`: solo con autorización explícita del usuario (quedan marcados "Propuesto").
 

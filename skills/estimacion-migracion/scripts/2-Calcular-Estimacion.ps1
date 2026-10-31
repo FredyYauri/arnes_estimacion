@@ -23,6 +23,7 @@ if ($null -eq $ASIG) { throw "No existe $Trabajo\asignacion.json (lo prepara el 
 $AJUSTES = Read-JsonFile (Join-Path $Trabajo 'ajustes.json')
 $PROY = $ENT.proyecto
 $errores = New-Object System.Collections.Generic.List[string]
+$excluidas = New-Object System.Collections.Generic.List[object]   # tareas del catálogo quitadas en asignacion.json (se informan en Supuestos)
 
 # ---------- Parámetros ----------
 $defectos = [ordered]@{
@@ -359,8 +360,8 @@ foreach ($c in $compOrdenados) {
     $nCO2 = if ($tipo -eq 'Upgrade') { 'Adecuación de código (LOC afectadas)' } else { 'Implementar la lógica de negocio, cálculos y procesos' }
     Add-CO 'CO-02' $nCO2 ($c.loc / $prod * $fcx) "$($c.loc) LOC / $prod × $fcx"
     Add-CO 'CO-03' 'Implementar pantallas y navegación' ($c.pantallas * (Par "Horas por pantalla $($c.complejidad)")) "$($c.pantallas) pant."
-    Add-CO 'CO-04' 'Convertir hojas de datos y parametría en tablas o configuración' ($c.tablas * (Par "Horas por tabla $($c.complejidad)")) "$($c.tablas) tablas"
-    Add-CO 'CO-05' 'Implementar integraciones y sustituir automatizaciones de Office' ($c.integraciones * (Par "Horas por integración $($c.complejidad)")) "$($c.integraciones) integ."
+    Add-CO 'CO-04' 'Migrar estructuras de datos y parametrización (tablas, archivos, configuración)' ($c.tablas * (Par "Horas por tabla $($c.complejidad)")) "$($c.tablas) tablas"
+    Add-CO 'CO-05' 'Implementar integraciones y reemplazar automatizaciones del origen' ($c.integraciones * (Par "Horas por integración $($c.complejidad)")) "$($c.integraciones) integ."
     Add-CO 'CO-06' 'Implementar reportes y salidas' ($c.reportes * (Par "Horas por reporte $($c.complejidad)")) "$($c.reportes) reportes"
     Add-CO 'CO-07' 'Manejo explícito de errores y externalización de rutas y secretos' ([Math]::Max(1, (Par '% Errores y secretos') / 100 * $sumCO26)) "% errores × Σ CO-02..06"
     if ($c.permisos) { Add-CO 'CO-08' 'Implementar permisos y auditoría' (@(4, 8, 12)[$i]) $c.complejidad }
@@ -525,6 +526,34 @@ foreach ($rs in $restr) {
     }
 }
 
+# ---------- Tareas propias de esta migración (asignacion.json) ----------
+# El catálogo es la base; cada migración puede quitar tareas que no aplican y agregar las que necesita.
+foreach ($x in @(Get-Val $ASIG 'tareasExcluidas' @())) {
+    $kx = [string]$(if ($x -is [string]) { $x } else { Get-Val $x 'clave' '' }); $motX = [string]$(if ($x -is [string]) { '' } else { Get-Val $x 'motivo' '' })
+    if ($kx -match '^(TRV-GES|TRV-ENT)$' -or $kx -match '\|CO-CT$') { Write-Host " - Aviso: '$kx' no se puede excluir; se mantiene."; continue }
+    if (-not $porClave.ContainsKey($kx)) { Write-Host " - Aviso: tareasExcluidas '$kx' no corresponde a ninguna tarea; se ignora."; continue }
+    $tx = $porClave[$kx]; $null = $tareas.Remove($tx); $porClave.Remove($kx)
+    foreach ($t in $tareas) { if ($t.preds -contains $kx) { $t.preds = @(@($t.preds | Where-Object { $_ -ne $kx }) + @($tx.preds) | Where-Object { $porClave.ContainsKey($_) } | Select-Object -Unique) } }
+    $excluidas.Add([ordered]@{ clave = $kx; tarea = $tx.tarea; horas = $tx.horas; motivo = $motX })
+}
+foreach ($x in @(Get-Val $ASIG 'tareasExtra' @())) {
+    $compX = [string](Get-Val $x 'componente' 'TRV'); $codX = [string](Get-Val $x 'codigo' 'EX'); $faseX = [string](Get-Val $x 'fase' '04')
+    if (-not $FASES.Contains($faseX)) { $errores.Add("tareasExtra $codX`: fase '$faseX' no existe (use 00, 01.1, 01.2, 02..08)."); continue }
+    if ($compX -eq 'TRV') { $ctxX = $ctxTRV; $kX = "TRV|$codX"; $recDef = $LT; $predDef = @('TRV-ENT') }
+    else {
+        $cX = @($componentes | Where-Object { $_.id -eq $compX -or ($_.idInventario -eq $compX -and $_.lote -le 1) }) | Select-Object -First 1
+        if (-not $cX -or -not $cX['ctx']) { $errores.Add("tareasExtra $codX`: componente '$compX' no existe o no tiene tareas."); continue }
+        $ctxX = $cX['ctx']; $kX = "$($cX.id)|$codX"; $recDef = $cX.desarrollador
+        $previas = @($tareas | Where-Object { $_.componente -eq $cX.id -and $_.fase -and $_.fase -le $FASES[$faseX] -and $_.codigo -ne 'CO-CT' })
+        $predDef = $(if ($previas.Count -gt 0) { @($previas[-1].clave) } else { @('TRV-ENT') })
+    }
+    if ($porClave.ContainsKey($kX)) { $errores.Add("tareasExtra: la clave '$kX' ya existe."); continue }
+    $predsX = @(Get-Val $x 'predecesoras' $predDef)
+    $tX = New-Tarea $kX $codX $faseX ([string](Get-Val $x 'tarea' $codX)) ([string](Get-Val $x 'recurso' $recDef)) (To-Num (Get-Val $x 'horas' 0) 0) 1 ([string](Get-Val $x 'origen' 'Asumida')) ([string](Get-Val $x 'motivo' 'Tarea propia de esta migración')) $predsX $ctxX
+    if ($tX.horas -le 0) { $errores.Add("tareasExtra $kX`: indicar horas > 0.") }
+    foreach ($pX in @($tX.preds)) { if (-not $porClave.ContainsKey($pX)) { $errores.Add("tareasExtra $kX`: predecesora '$pX' no existe.") } }
+}
+
 # Gestión (TRV-GES): % sobre las demás horas; el mínimo de 1 h/día lo completa 3-Programar.ps1.
 $sumOtras = 0; foreach ($t in $tareas) { $sumOtras += $t.horas }
 $null = New-Tarea 'TRV-GES' 'TRV-GES' '00' 'Gestión del proyecto, backlog, seguimiento, riesgos, reportes y coordinación' $JP ((Par '% Gestión del proyecto') / 100 * $sumOtras) 1 'Paramétrica' "% gestión × $sumOtras h" @() $ctxTRV 'distribuida'
@@ -558,6 +587,7 @@ $wbs = [ordered]@{
     bloques     = $bloques
     pases       = $pases
     tareas      = $tareas
+    excluidas   = $excluidas
 }
 Write-JsonFile (Join-Path $Trabajo 'wbs.json') $wbs
 $tot = 0; foreach ($t in $tareas) { $tot += $t.horas }
