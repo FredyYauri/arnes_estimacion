@@ -23,6 +23,8 @@ Cada criterio vale 1 (Bajo), 2 (Medio) o 3 (Alto).
 - LOC > 5.000 o Integraciones ≥ 4 → mínimo Media; si además Reglas = Alto → Alta.
 - "Complejidad forzada" informada → prevalece; registrarla como decisión de la entrada.
 
+**Filas agregadas** ("Módulos (n)" > 1): LOC, pantallas e integraciones se miden por módulo promedio (total ÷ n) para el puntaje y las reglas de escalamiento; así un aplicativo grande no sale Alta solo por su tamaño total. La fila se parte en lotes de módulos (`<ID>-L1`, `<ID>-L2`…) con las cantidades repartidas en partes iguales, de modo que las horas siguen saliendo de los totales. Cantidad de lotes: `lotes` en `asignacion.json`; si no, uno por cada desarrollador de `desarrolladores`; si no, ⌈n ÷ "Módulos por lote"⌉ (defecto 10). Migración de datos y permisos se estiman una sola vez (lote 1).
+
 Registrar en Estrategia de oleadas: puntaje, complejidad resultante y criterio que más pesó.
 
 ## Prioridad de ejecución

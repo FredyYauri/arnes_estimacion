@@ -48,7 +48,9 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Moneda | Op (B si hay tarifas) | Costeo |
 | Versión de la estimación | P | Título y control de cambios |
 
-## Hoja `Inventario` (una fila por componente: macro, módulo, requerimiento o aplicativo origen)
+## Hoja `Inventario` (una fila por componente: módulo, programa, macro, requerimiento o aplicativo origen, de cualquier tecnología legacy)
+
+Si se tiene el detalle por módulo, va una fila por módulo. Si solo se tienen totales de un aplicativo (p. ej. "40 módulos, 30.000 LOC, 120 pantallas"), va **una sola fila** con esos totales y la cantidad en "Módulos (n)": el arnés mide la complejidad por módulo promedio y parte la construcción en lotes para trabajar en paralelo.
 
 | Columna | Nivel | Nota |
 |---|---|---|
@@ -82,6 +84,7 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Complejidad forzada | Op | Prevalece sobre el cálculo |
 | Horas override | Op | Reemplaza Σ(02-05) del componente; origen `Entrada` |
 | Observaciones | Op | |
+| Módulos (n) | Op | Solo para filas agregadas (un aplicativo con totales). Vacío o 1 = la fila es un solo componente |
 
 \* No aplica a componentes con estrategia **Retirar** o **Mantener**.
 

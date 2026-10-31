@@ -253,7 +253,7 @@ try {
     $bloqueDe = @{}; foreach ($b in $PLAN.bloques) { foreach ($id in $b.componentes) { $bloqueDe[$id] = $b } }
     $paseDe = @{}; foreach ($pa in $PLAN.pases) { foreach ($bn in $pa.bloques) { $paseDe[$bn] = $pa } }
     $fila = 4; $orden = 0
-    foreach ($c in @($WBS.componentes | Sort-Object { [int]($_.ola -replace '\D', '') }, orden)) {
+    foreach ($c in @($WBS.componentes | Sort-Object { [int]($_.ola -replace '\D', '') }, orden, lote)) {
         $orden++; $b = $bloqueDe[$c.id]; $pa = $(if ($b) { $paseDe[$b.nombre] } else { $null })
         $riesgos = @(); if ($c.dependencia -ne 'Ninguna') { $riesgos += "Dependencia externa $($c.dependencia)" }; if ($c.riesgo -eq 'Alto') { $riesgos += 'Riesgo técnico alto' }
         $listo = $(if ($b -and $b.listo) { [int]$b.listo } else { '' }); $dep = $(if ($pa -and $pa.dia) { FechaDia ([int]$pa.dia) } else { '' })

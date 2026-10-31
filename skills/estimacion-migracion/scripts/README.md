@@ -51,7 +51,8 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
 {
   "numeroOlas": 1,
   "componentes": {
-    "M01": { "ola": "Ola 1", "desarrollador": "Ana", "orden": 1, "motivo": "Piloto de la plataforma Web .NET", "revisor": "Luis", "componenteIA": false }
+    "M01": { "ola": "Ola 1", "desarrollador": "Ana", "orden": 1, "motivo": "Piloto de la plataforma Web .NET", "revisor": "Luis", "componenteIA": false },
+    "APP2": { "ola": "Ola 1", "desarrolladores": ["Ana", "Pedro", "Rosa"], "orden": 2, "motivo": "Aplicativo grande (40 módulos) en 3 lotes en paralelo" }
   },
   "roles": {
     "Jefe de Proyecto": "Carla", "Líder Técnico": "Luis", "Arquitecto de Aplicaciones": "Luis",
@@ -68,6 +69,7 @@ Contiene solo decisiones de criterio que el modelo no puede derivar solo. Todo l
 
 - `numeroOlas`: cuántas olas pidió el usuario. Si no se mencionaron olas, `1` (una sola entrega, todo en "Ola 1"). Manda sobre "Modelo de entrega" / "Número de olas" de la entrada.
 - `componentes`: obligatorio para cada componente con tareas (`desarrollador` debe existir en Recursos o en `propuestos`). `ola` ("Ola 1".."Ola n") puede omitirse si viene "Ola sugerida" o si es una sola entrega.
+- Filas con "Módulos (n)" > 1 se parten en lotes `<ID>-L1..Lk`. `desarrolladores` reparte los lotes entre esas personas (uno por persona, en rueda); `lotes` fija la cantidad. Sin ninguno de los dos: ⌈n ÷ "Módulos por lote"⌉ con el `desarrollador` indicado. Un lote puede tener su propia entrada (`"APP2-L3": {...}`).
 - `roles`: opcional; si falta un rol, el script busca en Recursos según el catálogo (p. ej. sin Jefe de Proyecto, la gestión la toma el Líder Técnico).
 - `propuestos`: solo con autorización explícita del usuario (quedan marcados "Propuesto").
 

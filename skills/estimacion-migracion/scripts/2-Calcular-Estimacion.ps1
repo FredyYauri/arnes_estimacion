@@ -37,7 +37,7 @@ $defectos = [ordered]@{
     'Contingencia conocido' = 3; 'Contingencia integración' = 8; 'Contingencia requerimientos poco claros' = 15
     'Contingencia dependencia externa' = 15; 'Contingencia componente IA' = 15
     'Soporte dev en certificación (h/día)' = 4; 'Ejecución QA (h/día)' = 6; 'Coordinación LT en certificación (h/día)' = 2
-    'Hypercare dev (h/día por aplicativo)' = 2; 'Hypercare LT (h/día)' = 2
+    'Hypercare dev (h/día por aplicativo)' = 2; 'Hypercare LT (h/día)' = 2; 'Módulos por lote' = 10
 }
 function Par([string]$n) { return To-Num (Get-Val $ENT.parametros $n $defectos[$n]) $defectos[$n] }
 function ParTxt([string]$n, [string]$d) { return [string](Get-Val $ENT.parametros $n $d) }
@@ -125,13 +125,51 @@ if (-not $LT) { $errores.Add('No hay Líder Técnico en Recursos ni en asignacio
 function Nivel3([string]$v, [string[]]$escala) { $i = [array]::IndexOf($escala, $v); if ($i -lt 0) { return 1 }; return $i + 1 }
 $componentes = New-Object System.Collections.Generic.List[object]
 $asigComp = Get-Val $ASIG 'componentes' ([ordered]@{})
+# Filas agregadas: una fila con "Módulos (n)" > 1 (aplicativo grande sin detalle por módulo) se parte en lotes
+# de módulos para que varios desarrolladores trabajen en paralelo. La complejidad se mide por módulo promedio y
+# las cantidades (LOC, pantallas, etc.) se reparten entre los lotes, así las horas totales salen de los totales.
+# Lotes = asignacion.componentes.<ID>.lotes; si no, uno por desarrollador de "desarrolladores"; si no, ceil(n / Módulos por lote).
+function Split-Int([double]$total, [int]$k, [int]$j) { return [Math]::Floor($total * $j / $k) - [Math]::Floor($total * ($j - 1) / $k) }
+$camposReparto = @('LOC', 'Pantallas / formularios', 'Reportes / salidas', 'Integraciones (n)', 'Tablas / hojas / fuentes de datos (n)', 'Horas override (opcional)')
+$filasInv = New-Object System.Collections.Generic.List[object]
+$lotesDe = @{}   # ID de Inventario -> IDs de componente (el mismo ID o sus lotes)
+foreach ($r0 in $ENT.inventario) {
+    $id0 = [string]$r0['ID']; $nMod = [int](To-Num (Get-Val $r0 'Módulos (n)' 1) 1); if ($nMod -lt 1) { $nMod = 1 }
+    $ac0 = Get-Val $asigComp $id0 ([ordered]@{}); $devs0 = @(Get-Val $ac0 'desarrolladores' @())
+    $nL = 1
+    if ($nMod -gt 1 -and (Get-Val $r0 'Estrategia' 'Migrar') -notin @('Retirar', 'Mantener')) {
+        $nL = [int](To-Num (Get-Val $ac0 'lotes' 0) 0)
+        if ($nL -lt 1) { $nL = $(if ($devs0.Count -gt 1) { $devs0.Count } else { [int][Math]::Ceiling($nMod / (Par 'Módulos por lote')) }) }
+        $nL = [Math]::Max(1, [Math]::Min($nL, $nMod))
+    }
+    $lotesDe[$id0] = New-Object System.Collections.Generic.List[string]
+    for ($j = 1; $j -le $nL; $j++) {
+        $f = [ordered]@{}; foreach ($kk in $r0.Keys) { $f[$kk] = $r0[$kk] }
+        $f['_idBase'] = $id0; $f['_base'] = $r0; $f['_modulos'] = $nMod; $f['_lote'] = $j; $f['_nLotes'] = $nL
+        if ($nL -gt 1) {
+            $f['ID'] = "$id0-L$j"
+            $m1 = 0; for ($q = 1; $q -lt $j; $q++) { $m1 += Split-Int $nMod $nL $q }
+            $mJ = Split-Int $nMod $nL $j
+            $f['Nombre'] = "$(Get-Val $r0 'Nombre' $id0) – lote $j/$nL (módulos $($m1 + 1)-$($m1 + $mJ) de $nMod)"
+            foreach ($cp in $camposReparto) { $v = Get-Val $r0 $cp; if ($null -ne $v -and (To-Num $v 0) -gt 0) { $f[$cp] = Split-Int (To-Num $v) $nL $j } }
+            if ($j -gt 1) { $f['Migración de datos'] = 'Ninguna'; $f['Requiere permisos y auditoría'] = 'No' }   # una sola vez por aplicativo (lote 1)
+            $f['_dev'] = $(if ($devs0.Count -gt 0) { [string]$devs0[($j - 1) % $devs0.Count] } else { $null })
+        }
+        $filasInv.Add($f); $lotesDe[$id0].Add([string]$f['ID'])
+    }
+}
+
 $ordenAuto = 0
-foreach ($r in $ENT.inventario) {
+foreach ($r in $filasInv) {
     $ordenAuto++
-    $id = [string]$r['ID']
+    $id = [string]$r['ID']; $idBase = [string]$r['_idBase']; $rb = $r['_base']; $nMod = [int]$r['_modulos']
     $est = [string](Get-Val $r 'Estrategia' 'Migrar')
     $loc = To-Num (Get-Val $r 'LOC' 0); $pant = To-Num (Get-Val $r 'Pantallas / formularios' 0); $rep = To-Num (Get-Val $r 'Reportes / salidas' 0)
     $int = To-Num (Get-Val $r 'Integraciones (n)' 0); $tab = To-Num (Get-Val $r 'Tablas / hojas / fuentes de datos (n)' 0)
+    # Para la complejidad: tamaño del módulo promedio de la fila original (con 1 módulo = la fila tal cual)
+    $locC = (To-Num (Get-Val $rb 'LOC' 0)) / $nMod; $pantC = (To-Num (Get-Val $rb 'Pantallas / formularios' 0)) / $nMod
+    $intC = (To-Num (Get-Val $rb 'Integraciones (n)' 0)) / $nMod
+    $migrC = [string](Get-Val $rb 'Migración de datos' 'Ninguna')
     $migr = [string](Get-Val $r 'Migración de datos' 'Ninguna'); $reglas = [string](Get-Val $r 'Reglas de negocio' 'Bajo')
     $riesgo = [string](Get-Val $r 'Riesgo técnico' 'Bajo'); $dep = [string](Get-Val $r 'Dependencia externa' 'Ninguna')
     $reut = [string](Get-Val $r 'Reutilización' 'Media')
@@ -139,28 +177,28 @@ foreach ($r in $ENT.inventario) {
     # Puntaje de complejidad (complejidad-priorizacion.md)
     $crit = [ordered]@{
         'Reglas de negocio' = Nivel3 $reglas @('Bajo', 'Medio', 'Alto')
-        'Integraciones'     = $(if ($int -le 0) { 1 } elseif ($int -eq 1) { 2 } else { 3 })
-        'Datos'             = $(if ($migr -eq 'Compleja') { 3 } elseif ($migr -eq 'Simple') { 2 } else { 1 })
-        'Pantallas'         = $(if ($pant -le 0) { 1 } elseif ($pant -le 3) { 2 } else { 3 })
+        'Integraciones'     = $(if ($intC -le 0) { 1 } elseif ($intC -le 1) { 2 } else { 3 })
+        'Datos'             = $(if ($migrC -eq 'Compleja') { 3 } elseif ($migrC -eq 'Simple') { 2 } else { 1 })
+        'Pantallas'         = $(if ($pantC -le 0) { 1 } elseif ($pantC -le 3) { 2 } else { 3 })
         'Riesgo técnico'    = Nivel3 $riesgo @('Bajo', 'Medio', 'Alto')
         'Dependencia externa' = Nivel3 $dep @('Ninguna', 'Parcial', 'Crítica')
         'Reutilización'     = Nivel3 $reut @('Alta', 'Media', 'Baja')
-        'Tamaño (LOC)'      = $(if ($loc -lt 1000) { 1 } elseif ($loc -le 3000) { 2 } else { 3 })
+        'Tamaño (LOC)'      = $(if ($locC -lt 1000) { 1 } elseif ($locC -le 3000) { 2 } else { 3 })
     }
     $suma = 0; $dom = ''; $max = 0
     foreach ($k in $crit.Keys) { $suma += $crit[$k]; if ($crit[$k] -gt $max) { $max = $crit[$k]; $dom = $k } }
     $puntaje = [Math]::Round($suma / 8.0, 2)
     $cx = if ($puntaje -le 1.6) { 'Baja' } elseif ($puntaje -le 2.3) { 'Media' } else { 'Alta' }
-    $motivoCx = "Puntaje $puntaje"
+    $motivoCx = "Puntaje $puntaje"; if ($nMod -gt 1) { $motivoCx += " (por módulo promedio de $nMod)" }
     if ($riesgo -eq 'Alto' -and $dep -eq 'Crítica') { $cx = 'Alta'; $motivoCx += '; escalada: riesgo Alto y dependencia Crítica' }
-    if ($loc -gt 5000 -or $int -ge 4) {
+    if ($locC -gt 5000 -or $intC -ge 4) {
         if ($cx -eq 'Baja') { $cx = 'Media'; $motivoCx += '; mínimo Media por tamaño/integraciones' }
         if ($reglas -eq 'Alto') { $cx = 'Alta'; $motivoCx += '; Alta por reglas Alto' }
     }
     $forz = Get-Val $r 'Complejidad forzada (opcional)'
     if ($forz) { $cx = [string]$forz; $motivoCx += "; forzada en la entrada: $forz" }
 
-    $ac = Get-Val $asigComp $id ([ordered]@{})
+    $ac = Get-Val $asigComp $id $null; if ($null -eq $ac) { $ac = Get-Val $asigComp $idBase ([ordered]@{}) }   # un lote hereda la asignación de su fila
     $ola = Get-Val $ac 'ola'
     if (-not $ola) { $os = Get-Val $r 'Ola sugerida'; if ($os) { $ola = $(if ([string]$os -match '^\d+$') { "Ola $os" } else { [string]$os }) } }
     if ($modelo -eq 'Entrega única') { $ola = 'Ola 1' }
@@ -169,13 +207,14 @@ foreach ($r in $ENT.inventario) {
         if ($nO -lt 1 -or $nO -gt $nOlas) { $errores.Add("Componente ${id}: '$ola' fuera de las $nOlas olas pedidas.") } else { $ola = "Ola $nO" }
     }
     $tieneTareas = $est -ne 'Mantener'
-    $dev = Get-Val $ac 'desarrollador'
+    $dev = Get-Val $ac 'desarrollador'; if ($r['_dev'] -and -not (Get-Val $asigComp $id $null)) { $dev = $r['_dev'] }
+    if (-not $dev) { $dl = @(Get-Val $ac 'desarrolladores' @()); if ($dl.Count -gt 0) { $dev = $dl[0] } }
     if ($tieneTareas -and -not $ola) { $errores.Add("Componente $id sin ola (asignacion.componentes.$id.ola).") }
     if ($tieneTareas -and -not $dev) { $errores.Add("Componente $id sin desarrollador (asignacion.componentes.$id.desarrollador).") }
     if ($dev -and -not $porNombre.ContainsKey([string]$dev)) { $errores.Add("Componente ${id}: el desarrollador '$dev' no está en Recursos.") }
 
     $componentes.Add([ordered]@{
-            id = $id; nombre = [string](Get-Val $r 'Nombre' $id); aplicativoOrigen = [string](Get-Val $r 'Aplicativo origen' '')
+            id = $id; idInventario = $idBase; lote = [int]$r['_lote']; lotes = [int]$r['_nLotes']; modulos = $nMod; nombre = [string](Get-Val $r 'Nombre' $id); aplicativoOrigen = [string](Get-Val $r 'Aplicativo origen' '')
             tecnologiaOrigen = [string](Get-Val $r 'Tecnología origen' ''); aplicativo = [string](Get-Val $r 'Aplicativo destino' '')
             destino = [string](Get-Val $r 'Destino existente o nuevo' 'Existente'); plataforma = [string](Get-Val $r 'Plataforma destino' '')
             estrategia = $est; tipo = [string](Get-Val $r 'Tipo de trabajo' $tipoProyecto); prioridad = [int](To-Num (Get-Val $r 'Prioridad de negocio (1 alta - 3 baja)' 2) 2)
@@ -251,7 +290,7 @@ $prereq04 = @('TRV-01', 'TRV-02', 'TRV-04', 'TRV-05', 'TRV-06', 'TRV-07')
 
 # Base común por aplicativo destino
 foreach ($app in $baseComun.Keys) {
-    $cs = @($compTrab | Where-Object { $_.aplicativo -eq $app } | Sort-Object { [int]($_.ola -replace '\D', '') }, orden)
+    $cs = @($compTrab | Where-Object { $_.aplicativo -eq $app } | Sort-Object { [int]($_.ola -replace '\D', '') }, orden, lote)
     $c0 = $cs[0]
     $ctx = @{ ola = $c0.ola; aplicativoOrigen = 'Base común'; aplicativo = $app; plataforma = $c0.plataforma; componente = "Base común $app"; componenteNombre = "Base común $app"; complejidad = ''; bloque = '' }
     $dev = $c0.desarrollador; $k = "BC|$app|"
@@ -268,7 +307,7 @@ foreach ($app in $baseComun.Keys) {
 $ix = @{ 'Baja' = 0; 'Media' = 1; 'Alta' = 2 }
 $restr = @($ENT.restricciones)
 $ultimoDeSerie = @{}   # desarrollador -> componente anterior en su serie
-$compOrdenados = @($compT | Sort-Object { [int]($_.ola -replace '\D', '') }, orden)
+$compOrdenados = @($compT | Sort-Object { [int]($_.ola -replace '\D', '') }, orden, lote)
 foreach ($c in $compOrdenados) {
     $id = $c.id; $k = "$id|"; $i = $ix[$c.complejidad]; if ($null -eq $i) { $i = 1 }
     $ctx = @{ ola = $c.ola; aplicativoOrigen = $c.aplicativoOrigen; aplicativo = $c.aplicativo; plataforma = $c.plataforma; componente = $id; componenteNombre = $c.nombre; complejidad = $c.complejidad; bloque = '' }
@@ -303,7 +342,7 @@ foreach ($c in $compOrdenados) {
     $minDia = ''
     foreach ($rs in $restr) {
         $afecta = [string](Get-Val $rs 'Afecta a (IDs de Inventario)' '')
-        if ((Get-Val $rs 'Tipo') -eq 'Dependencia externa' -and ($afecta -split '[,;\s]+') -contains $id -and (Get-Val $rs 'Fecha')) { $minDia = [string]$rs['Fecha'] }
+        if ((Get-Val $rs 'Tipo') -eq 'Dependencia externa' -and (($afecta -split '[,;\s]+') -contains $id -or ($afecta -split '[,;\s]+') -contains $c.idInventario) -and (Get-Val $rs 'Fecha')) { $minDia = [string]$rs['Fecha'] }
     }
     $sumCO26 = 0.0; $sumCO19 = 0.0; $first04 = $true; $iaC = FIA 'Construcción'
     function Add-CO([string]$cod, [string]$nom, [double]$base, [string]$drv) {
@@ -477,8 +516,12 @@ foreach ($rs in $restr) {
     if ((Get-Val $rs 'Tipo') -ne 'Orden obligatorio') { continue }
     $idsR = @(([string](Get-Val $rs 'Afecta a (IDs de Inventario)' '')) -split '[,;\s>]+' | Where-Object { $_ })
     for ($j = 1; $j -lt $idsR.Count; $j++) {
-        $tB = $porClave["$($idsR[$j])|AN-01"]
-        if ($tB -and $porClave.ContainsKey("$($idsR[$j-1])|PU-02")) { $tB.preds = @($tB.preds) + "$($idsR[$j-1])|PU-02" }
+        $idsA = $(if ($lotesDe.ContainsKey($idsR[$j - 1])) { $lotesDe[$idsR[$j - 1]] } else { @($idsR[$j - 1]) })
+        $idsB = $(if ($lotesDe.ContainsKey($idsR[$j])) { $lotesDe[$idsR[$j]] } else { @($idsR[$j]) })
+        foreach ($b in $idsB) {
+            $tB = $porClave["$b|AN-01"]; if (-not $tB) { continue }
+            foreach ($a in $idsA) { if ($porClave.ContainsKey("$a|PU-02")) { $tB.preds = @($tB.preds) + "$a|PU-02" } }
+        }
     }
 }
 
