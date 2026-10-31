@@ -19,7 +19,7 @@ Notación: `P` = hoja Planning, filas de tarea `D1:N`, días `K:LC` (D = aplicat
 | 11 | Actividades transversales identificadas | `=COUNTIF(P!B D1:B N,"Transversal")` | ≥ 8 |
 | 12 | Preparación presente (01.1 y 01.2) | `=COUNTIF(P!C D1:C N,"01.1*")*COUNTIF(P!C D1:C N,"01.2*")` | > 0 |
 | 13 | Certificación por bloque con duración mínima | n.º de bloques con días de 06 ≥ días_cert (calculado por el script; valor) | = n.º de bloques |
-| 14 | Las oleadas generan entregables periódicos | `=COUNTA('Matriz de entregables'!A4:A<n>)` y ninguna ola > duración máxima | = n.º de olas |
+| 14 | Las olas coinciden con lo pedido | `=COUNTA('Matriz de entregables'!A4:A<n>)` | = n.º de olas pedidas (1 = entrega única) |
 | 15 | Días sin carga de desarrolladores dentro de su ventana | `=SUM('Capacidad por recurso'!<Días sin carga devs>)` | ≤ 10 % de días-ventana (justificar) |
 | 16 | Dependencias incumplidas | valor del script (tareas que inician antes del fin de una predecesora) | 0 |
 | 17 | Orden de fases por componente (02 → 03 → 04 → 05 → 06 → 07 → 08) | valor del script | 0 |
@@ -44,4 +44,4 @@ certificación: días(06 del bloque) ≥ días_cert ; inicio(06) > fin(PU-02 del
 totales: Σ planning == Σ detalle ; Σ por origen consistente
 ```
 
-Guardar el resultado en `_trabajo/validaciones.txt` (control, valor, esperado, estado) y resumirlo en la respuesta final.
+Los controles los ejecuta [`scripts/4-Validar-Planning.ps1`](../scripts/4-Validar-Planning.ps1). Guardar el resultado en `_trabajo/validaciones.txt` (control, valor, esperado, estado) y resumirlo en la respuesta final.

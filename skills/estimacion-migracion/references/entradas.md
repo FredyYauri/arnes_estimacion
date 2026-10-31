@@ -20,7 +20,7 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 |---|---|---|
 | Nombre del proyecto | B | Títulos, slug del archivo |
 | Cliente / área solicitante | Op | Resumen |
-| Tipo de trabajo | B | Migración / Upgrade / Mejora evolutiva |
+| Tipo de trabajo | B | Migración (otra tecnología) / Upgrade (misma tecnología, nueva versión) / Mejora evolutiva. Se puede indicar distinto por fila en Inventario |
 | Objetivo | B | Resumen |
 | Alcance (resumen) | B | Resumen |
 | Fuera de alcance | Op | Hoja Supuestos (como exclusión declarada) |
@@ -30,10 +30,11 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Ambientes disponibles | B | Riesgo si no hay Certificación/QA |
 | Fecha tentativa de inicio | B | `FechaInicio` |
 | Fecha objetivo | Op | Holgura o brecha contra el fin estimado |
-| Jornada (h/día) | P | Tope absoluto diario |
+| Jornada (h/día) | P | Horas por recurso y día (defecto 8, configurable). Carga diaria planificada y tope absoluto |
 | Días laborables | P | `WORKDAY` |
 | Uso de asistente IA en el desarrollo | P | Activa factores IA |
-| Modelo de entrega | P | Oleadas / Entrega única |
+| Modelo de entrega | P | Entrega única (defecto) / Oleadas. Si el pedido indica n olas, manda el pedido |
+| Número de olas | Op | Solo con Oleadas (≥ 2). Vacío o 1 = una sola entrega |
 | Agrupación de certificación y despliegue | P | Por ola / Por aplicativo destino / Pase único |
 | Certificación a cargo de | P | QA proveedor / QA cliente / Mixta |
 | Duración mínima de certificación (días hábiles) | P | Regla de certificación |
@@ -47,7 +48,13 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Moneda | Op (B si hay tarifas) | Costeo |
 | Versión de la estimación | P | Título y control de cambios |
 
-## Hoja `Inventario` (una fila por componente: macro, módulo, requerimiento o aplicativo origen)
+## Hoja `Inventario` (una fila por componente: módulo, programa, macro, requerimiento o aplicativo origen, de cualquier tecnología legacy)
+
+Si se tiene el detalle por módulo, va una fila por módulo. Si solo se tienen totales de un aplicativo (p. ej. "40 módulos, 30.000 LOC, 120 pantallas"), va **una sola fila** con esos totales y la cantidad en "Módulos (n)": el arnés mide la complejidad por módulo promedio y parte la construcción en lotes para trabajar en paralelo.
+
+**Microfronts y microservicios**: cada microfront y cada microservicio es un aplicativo destino propio (p. ej. un CRM con 4 microfronts y 8 microservicios = 12 aplicativos), con su fila en el Inventario y su nombre en "Aplicativo destino". Si uno de ellos tiene varios componentes, va una fila por componente con el mismo aplicativo destino.
+
+**Un origen, varios destinos**: el mapeo origen → destino viene en el pedido o en el documento de la solicitud (p. ej. front ASP.NET → Angular y back .NET Framework → .NET 8, o .NET → Java). Se carga una fila por destino con el mismo "Aplicativo origen" y las cantidades que le tocan a cada uno según ese documento. El arnés no define el mapeo por su cuenta.
 
 | Columna | Nivel | Nota |
 |---|---|---|
@@ -58,8 +65,8 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Tecnología origen | B | |
 | Aplicativo destino | B | |
 | Destino existente o nuevo | B | |
-| Plataforma destino | B | Lista de Catalogos |
-| Estrategia | B | Migrar / Refactorizar / Reconstruir / Reemplazar / Retirar / Mantener |
+| Plataforma destino | B | Texto libre: la indica el pedido o el documento de arquitectura/diseño. La lista de Catalogos es solo sugerencia |
+| Estrategia | B | Migrar / Refactorizar / Reconstruir / Reemplazar por estándar / Retirar / Mantener (lista de Catalogos) |
 | Tipo de trabajo | Op | Vacío = hereda el tipo de trabajo del proyecto (regla, no suposición) |
 | Prioridad de negocio (1-3) | Op | Vacío = sin prioridad diferencial (no altera la secuencia) |
 | Ola sugerida | Op | Vacío = la define el arnés |
@@ -81,6 +88,7 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 | Complejidad forzada | Op | Prevalece sobre el cálculo |
 | Horas override | Op | Reemplaza Σ(02-05) del componente; origen `Entrada` |
 | Observaciones | Op | |
+| Módulos (n) | Op | Solo para filas agregadas (un aplicativo con totales). Vacío o 1 = la fila es un solo componente |
 
 \* No aplica a componentes con estrategia **Retirar** o **Mantener**.
 

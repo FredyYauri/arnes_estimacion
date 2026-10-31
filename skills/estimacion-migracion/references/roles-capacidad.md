@@ -2,7 +2,7 @@
 
 ## Catálogo de roles
 
-**Capacidad planificable** = tope diario de carga cuando `Carga diaria máxima` = "Capacidad productiva del rol" (defecto). Corresponde al valor superior del rango sugerido. Si el parámetro = "Jornada", el tope es la jornada (8 h) para todos. Nunca superar la jornada.
+**Carga diaria por defecto** = la Jornada del proyecto (8 h, configurable en Proyecto → "Jornada (h/día)") para todos los recursos, ajustada por la Dedicación % y la Capacidad h/día de cada recurso si se informa. Solo si `Carga diaria máxima` = "Capacidad productiva del rol" se usa la columna **Cap. planificable** de esta tabla como tope por rol (valor superior del rango sugerido). Nunca superar la jornada.
 
 | Rol | Actividades principales | Cap. diaria sugerida | Cap. planificable (h/día) | Modalidad recomendada |
 |---|---|---|---|---|
@@ -42,6 +42,8 @@
 | Power BI | Developer Power BI Sr | Developer Power BI Ssr |
 | iOS / Android | Developer iOS/Android Sr | Developer iOS/Android Ssr |
 | Datos (ETL, carga, BD) | Data Engineer Sr | Data Engineer Medium |
+
+**Plataforma no listada** (la plataforma destino viene del pedido o del documento, p. ej. Angular, Java, microfrontends, nube): rol `Developer <plataforma> Sr` para Alta y `Developer <plataforma> Ssr` para Baja/Media, con la misma capacidad que los developers de la tabla. Se asigna a quien tenga esa plataforma en "Plataformas / skills".
 
 Si solo hay un nivel disponible en Recursos, usar ese y registrar la diferencia como riesgo si la complejidad no coincide.
 

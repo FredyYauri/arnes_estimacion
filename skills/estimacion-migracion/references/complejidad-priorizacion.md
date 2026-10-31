@@ -23,6 +23,8 @@ Cada criterio vale 1 (Bajo), 2 (Medio) o 3 (Alto).
 - LOC > 5.000 o Integraciones ≥ 4 → mínimo Media; si además Reglas = Alto → Alta.
 - "Complejidad forzada" informada → prevalece; registrarla como decisión de la entrada.
 
+**Filas agregadas** ("Módulos (n)" > 1): LOC, pantallas e integraciones se miden por módulo promedio (total ÷ n) para el puntaje y las reglas de escalamiento; así un aplicativo grande no sale Alta solo por su tamaño total. La fila se parte en lotes de módulos (`<ID>-L1`, `<ID>-L2`…) con las cantidades repartidas en partes iguales, de modo que las horas siguen saliendo de los totales. Cantidad de lotes: `lotes` en `asignacion.json`; si no, uno por cada desarrollador de `desarrolladores`; si no, ⌈n ÷ "Módulos por lote"⌉ (defecto 10). Migración de datos y permisos se estiman una sola vez (lote 1).
+
 Registrar en Estrategia de oleadas: puntaje, complejidad resultante y criterio que más pesó.
 
 ## Prioridad de ejecución
@@ -39,13 +41,14 @@ Orden de prioridad (de mayor a menor) para asignar oleada y posición en la seri
 
 ## Armado de oleadas
 
-- Si "Modelo de entrega" = Entrega única → una sola ola ("Ola 1").
-- Si = Oleadas:
-  - Cada ola dura como máximo "Duración máxima de ola (semanas)" de construcción + pruebas (defecto 8).
+- **Cuántas olas**: las que pida el usuario. Si el pedido dice "en n olas" (o la entrada trae Modelo de entrega = Oleadas con "Número de olas" = n), se arman exactamente n olas y se guarda `numeroOlas: n` en `asignacion.json`. Si no se menciona, es **una sola entrega** (todo en "Ola 1"). El arnés no inventa ni parte olas por su cuenta.
+- Con n olas:
+  - **Quién agrupa**: si el pedido (o la columna "Ola sugerida") dice qué componentes van en cada ola, esa agrupación **se respeta tal cual**. Si genera un conflicto (dependencia que va al revés, recurso sobrecargado), no se cambia: se informa y se pregunta. Si el pedido dice que la agrupación la define el arnés, se reparten los componentes con los criterios de priorización de abajo. Si no dice nada, se pregunta.
+  - Ninguna ola queda vacía.
   - Cada ola produce un entregable certificable (criterio de salida explícito en la Matriz de entregables).
   - Agrupar por aplicativo destino y patrones compartidos; un desarrollador hace en **serie** sus componentes de una ola (termina uno antes de iniciar el siguiente) y puede adelantar análisis/diseño de la ola siguiente mientras espera una revisión o dependencia.
   - Olas pueden solaparse si usan recursos distintos (frentes paralelos); la ola N+1 de un recurso comienza cuando ese recurso termina su ola N.
-  - Respetar "Ola sugerida" del Inventario salvo que viole una dependencia o la capacidad; si se cambia, explicar el motivo en "Motivo de la secuencia".
+  - En "Motivo de la secuencia" se indica si la ola la definió el usuario o el arnés (y con qué criterio).
 - Si "Agrupación de certificación y despliegue" = Pase único → certificaciones por ola/aplicativo y un solo despliegue al final; = Por ola → un bloque de certificación + despliegue + seguimiento por ola; = Por aplicativo destino → un bloque por aplicativo dentro de cada ola.
 
 ## Salidas de este paso

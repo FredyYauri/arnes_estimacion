@@ -21,7 +21,7 @@
 Proyecto
 └── Oleada / Entregable            (Transversal | Ola 1..n | Pase/Bloque de despliegue)
     └── Aplicativo destino         (Todos | <aplicativo>)
-        └── Componente             (macro / requerimiento / aplicativo origen | Base común <aplicativo> | TRV)
+        └── Componente             (módulo / programa / requerimiento / aplicativo origen, de cualquier tecnología legacy | Base común <aplicativo> | TRV)
             └── Fase               (00..08)
                 └── Tarea          (código del catálogo + nombre + "(<componente>)")
 ```
@@ -53,7 +53,7 @@ Prerrequisitos: TRV-01, TRV-02, TRV-04, TRV-05, TRV-06 y TRV-07 terminan antes d
 
 ## Base común por aplicativo destino
 
-Se crea cuando un aplicativo destino recibe ≥2 componentes o es **Nuevo**. Ola = la primera ola que usa ese aplicativo. Componente = `Base común <aplicativo>`.
+Se crea cuando un aplicativo destino recibe ≥ 2 componentes. Un aplicativo de un solo componente (p. ej. un microfront o un microservicio, aunque sea Nuevo) se prepara con CO-01. Ola = la primera ola que usa ese aplicativo. Componente = `Base común <aplicativo>`.
 
 | Código | Fase | Tarea |
 |---|---|---|
@@ -66,7 +66,7 @@ Se crea cuando un aplicativo destino recibe ≥2 componentes o es **Nuevo**. Ola
 
 Dependencia: BC-03/BC-04 terminan antes de la construcción de los componentes de ese aplicativo; BC-06 antes de sus pruebas unitarias.
 
-## Tareas por componente (estrategia Migrar / Refactorizar / Reconstruir / Reemplazar)
+## Tareas por componente (estrategia Migrar / Refactorizar / Reconstruir / Reemplazar por estándar)
 
 Nombre en Planning: `<Tarea> (<ID componente>)`.
 
@@ -82,8 +82,8 @@ Nombre en Planning: `<Tarea> (<ID componente>)`.
 | CO-01 | 04 | Preparar el aplicativo destino para recibir la funcionalidad | Developer asignado | Destino sin base común |
 | CO-02 | 04 | Implementar la lógica de negocio, cálculos y procesos | Developer asignado | Siempre |
 | CO-03 | 04 | Implementar pantallas y navegación | Developer asignado | Pantallas > 0 |
-| CO-04 | 04 | Convertir hojas de datos y parametría en tablas o configuración | Developer asignado | Tablas > 0 |
-| CO-05 | 04 | Implementar integraciones y sustituir automatizaciones de Office | Developer asignado | Integraciones > 0 |
+| CO-04 | 04 | Migrar estructuras de datos y parametrización (tablas, archivos, configuración) | Developer asignado | Tablas > 0 |
+| CO-05 | 04 | Implementar integraciones y reemplazar automatizaciones del origen | Developer asignado | Integraciones > 0 |
 | CO-06 | 04 | Implementar reportes y salidas | Developer (Power BI si aplica) | Reportes > 0 |
 | CO-07 | 04 | Manejo explícito de errores y externalización de rutas y secretos | Developer asignado | Siempre |
 | CO-08 | 04 | Implementar permisos y auditoría | Developer asignado | Requiere permisos y auditoría = Sí |
@@ -95,11 +95,27 @@ Nombre en Planning: `<Tarea> (<ID componente>)`.
 | DE-01 | 07 | Manual de usuario y runbook del componente | Developer asignado | Alcance ≥ Producción |
 | SE-01 | 08 | Retiro del componente legacy (desactivar, archivar y comunicar) | Developer asignado | Parámetro "Incluir retiro del legacy" = Sí y alcance = Hypercare |
 
+## Adaptar el catálogo a cada migración
+
+El catálogo es la **base**, no una lista cerrada: ni este catálogo ni las tareas del Excel de ejemplo tienen que repetirse igual en todas las migraciones. Según el pedido, los documentos y la tecnología origen/destino, el agente ajusta el WBS en `asignacion.json`:
+
+- `tareasExcluidas`: tareas del catálogo que no aplican (p. ej. `"M01|DI-02"` si no hay rediseño de pantallas), cada una con su motivo. Se informan en Supuestos como "Tarea excluida". No se pueden excluir TRV-ENT, TRV-GES ni la contingencia.
+- `tareasExtra`: tareas propias de la migración que el catálogo no cubre (p. ej. conversión de JCL a pipelines, migración de reportes Crystal, pruebas de performance). Cada una con componente (o `TRV`), código, fase, tarea, horas, recurso, origen (`Asumida` o `Entrada`) y motivo. Sin predecesoras explícitas, va después de la última tarea del componente en esa fase o antes.
+
+Toda tarea extra o excluida debe poder explicarse con el pedido o con un dato de la entrada; si no, se pregunta.
+
 Se permite agrupar en una sola fila tareas del mismo componente, fase y recurso (p. ej. AN-01+AN-03, CO-02+CO-03+CO-04, PU-01+PU-02) para reducir filas; la trazabilidad por código queda en la hoja "Detalle de horas" (columna ID planning).
 
 Estrategia **Retirar**: solo AN-02 (confirmar retiro con negocio) y SE-01. Estrategia **Mantener**: sin tareas (se lista en Estrategia de oleadas con 0 h).
 Tipo **Mejora evolutiva**: usar las mismas tareas; LOC = líneas a crear o modificar; AN-01 se reduce a la mitad (no hay código origen que extraer).
-Tipo **Upgrade** (versión de framework/plataforma): AN-01 = inventario de dependencias incompatibles; CO-02 = adecuación de código (LOC afectadas); agregar PU de regresión (PU-02 × 1,5).
+**Misma tecnología o distinta** (lo indica el pedido o el documento, por componente o por capa):
+
+| Caso | Ejemplo | Tipo de trabajo | Estrategia habitual | Qué cambia |
+|---|---|---|---|---|
+| Misma tecnología, nueva versión | .NET Framework → .NET 8, Java 8 → Java 21, Angular.js → Angular | Upgrade | Refactorizar (o Migrar si se reescribe mucho) | AN-01 = inventario de dependencias y APIs incompatibles; CO-02 = adecuación de código sobre las LOC afectadas (si no se conocen, LOC totales con el factor de la estrategia); pruebas de regresión: PU-02 × 1,5 |
+| Distinta tecnología | .NET → Java, VB6 → .NET, COBOL → Java, ASP.NET WebForms → Angular | Migración | Migrar o Reconstruir | AN-01 = análisis completo del origen; CO-02 = reescritura de la lógica (LOC totales) |
+
+Un mismo aplicativo puede tener ambos casos (p. ej. front WebForms → Angular = Migración y back .NET Framework → .NET 8 = Upgrade): va una fila por destino, cada una con su tipo de trabajo. Si el pedido no deja claro cuál aplica, se pregunta.
 
 ## Tareas por bloque de certificación/despliegue
 

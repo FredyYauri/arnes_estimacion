@@ -1,6 +1,6 @@
 # Reglas de programación (Gantt diario)
 
-El calendario se calcula con un script PowerShell generado en `_trabajo/programar.ps1` que lee `_trabajo/wbs.json` y escribe `_trabajo/planning.json`. **Nunca** asignar horas diarias manualmente.
+El calendario lo calcula el script fijo [`scripts/3-Programar.ps1`](../scripts/3-Programar.ps1), que lee `_trabajo/wbs.json` y escribe `_trabajo/planning.json`. **Nunca** asignar horas diarias manualmente; las únicas horas por día que se respetan tal cual son las tareas fijadas por el usuario en `ajustes.json` (ver [scripts](../scripts/README.md)).
 
 ## Reglas duras
 
@@ -46,7 +46,6 @@ al terminar: programar TRV-GES (distribuida) y TRV-ACO (relleno)
 ## Balanceo y ajustes (iterar antes de generar el Excel)
 
 - Fecha objetivo incumplida → (a) mover componentes del recurso más cargado a otro con la misma plataforma, (b) informar la brecha y recomendar recursos adicionales (solo se agregan si el usuario lo autoriza). Nunca subir la carga diaria por encima del tope.
-- Ola que excede su duración máxima → partirla en dos olas.
 - Recurso con > 20 % de días sin carga en su ventana → reasignar o acortar su ventana (entra cuando hay trabajo y sale al terminar).
 
 ## Formato de `planning.json`
@@ -56,7 +55,7 @@ al terminar: programar TRV-GES (distribuida) y TRV-ACO (relleno)
   "fechaInicio": "2026-11-02",
   "feriados": ["2026-12-08", "2026-12-25"],
   "ultimoDia": 84,
-  "hitos": [{"codigo": "H0", "nombre": "Preparación completa", "dia": 10, "criterio": "..."}],
+  "hitos": [{"codigo": "G0", "nombre": "Inicio", "dia": 10, "criterio": "...", "aprueba": "Jefe de Proyecto + cliente"}],
   "leyenda": [{"aplicativoOrigen": "Warrants-Autom.xlsm", "color": "#BDD7EE"}, {"aplicativoOrigen": "Transversal", "color": "#E7E6E6"}],
   "recursos": [{"nombre": "Líder Técnico 1", "rol": "Líder Técnico", "cap": 5, "propuesto": true}],
   "tareas": [
