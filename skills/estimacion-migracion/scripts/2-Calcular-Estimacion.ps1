@@ -245,7 +245,9 @@ $nPlat = @($compTrab | ForEach-Object { $_.plataforma } | Sort-Object -Unique).C
 $baseComun = @{}
 foreach ($app in $apps) {
     $cs = @($compTrab | Where-Object { $_.aplicativo -eq $app })
-    if ($cs.Count -ge 2 -or @($cs | Where-Object { $_.destino -eq 'Nuevo' }).Count -gt 0) { $baseComun[$app] = (@($cs | Where-Object { $_.destino -eq 'Nuevo' }).Count -gt 0) }
+    # Base común solo si el aplicativo destino tiene ≥ 2 componentes. Un aplicativo de un solo componente
+    # (p. ej. un microfront o un microservicio) se prepara con CO-01, no con una base común completa.
+    if ($cs.Count -ge 2) { $baseComun[$app] = (@($cs | Where-Object { $_.destino -eq 'Nuevo' }).Count -gt 0) }
 }
 
 # ---------- Tareas ----------
@@ -497,11 +499,20 @@ foreach ($pa in $pases) {
     }
     if ($alcanceHyper) {
         $preSE = $finPase; $se = @()
+        # Una tarea de hypercare por desarrollador con los aplicativos que entregó en el pase
+        # (h/día = h por aplicativo × n.º de aplicativos, tope media jornada): 12 microservicios no suman 24 h/día.
+        $hd = Par 'Hypercare dev (h/día por aplicativo)'
+        $appsDev = [ordered]@{}
         foreach ($app in $appsP) {
             $dApp = @($compTrab | Where-Object { $_.aplicativo -eq $app -and $ids -contains $_.id } | ForEach-Object { $_.desarrollador })[0]
-            $hd = Par 'Hypercare dev (h/día por aplicativo)'
-            $t = New-Tarea "${kp}SE-02|$app" 'SE-02' '08' "Hypercare: estabilización, monitoreo y soporte inicial ($app)" $dApp ($diasHyper * $hd) 1 'Paramétrica' "$diasHyper días × $hd h" $preSE $ctx 'tasa_fija'
-            $t.hDia = $hd; $t.diasMin = $diasHyper; $se += $t.clave
+            if (-not $dApp) { continue }
+            if (-not $appsDev.Contains($dApp)) { $appsDev[$dApp] = New-Object System.Collections.Generic.List[string] }
+            $appsDev[$dApp].Add($app)
+        }
+        foreach ($dApp in $appsDev.Keys) {
+            $la = $appsDev[$dApp]; $hDev = [int][Math]::Max(1, [Math]::Min($hd * $la.Count, [Math]::Floor($jornada / 2)))
+            $t = New-Tarea "${kp}SE-02|$dApp" 'SE-02' '08' "Hypercare: estabilización, monitoreo y soporte inicial ($($la -join ', '))" $dApp ($diasHyper * $hDev) 1 'Paramétrica' "$diasHyper días × $hDev h ($hd h × $($la.Count) aplicativos, tope media jornada)" $preSE $ctx 'tasa_fija'
+            $t.hDia = $hDev; $t.diasMin = $diasHyper; $se += $t.clave
         }
         $hl = Par 'Hypercare LT (h/día)'
         $t = New-Tarea "${kp}SE-02|LT" 'SE-02' '08' "Hypercare: coordinación técnica ($($pa.nombre))" $LT ($diasHyper * $hl) 1 'Paramétrica' "$diasHyper días × $hl h" $preSE $ctx 'tasa_fija'

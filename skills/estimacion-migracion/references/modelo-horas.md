@@ -119,7 +119,7 @@ Si "Uso de asistente IA" = No, todos los factores IA = 1,0.
 - CE-04 = días_cert × Coordinación LT en certificación (h/día).
 - CE-05 = 8 + 2 × componentes del bloque (si datos sensibles).
 - DE-02 = 8 por pase. DE-03 = 8 × n_app_b. DE-04 = 4 × n_app_b (Plataformas) + 2 por desarrollador.
-- SE-02 = días_hypercare × (Hypercare dev × n_app_b + Hypercare LT). SE-03 = 8 + 2 × n_app_b.
+- SE-02 = días_hypercare × (por desarrollador: mín(Hypercare dev × aplicativos que entregó en el bloque, media jornada) + Hypercare LT). SE-03 = 8 + 2 × n_app_b.
 
 Todas con origen Paramétrica y factor IA Otros. Si "Certificación a cargo de" = QA cliente, no generar CE-01/CE-02 (registrar como decisión declarada en la entrada).
 

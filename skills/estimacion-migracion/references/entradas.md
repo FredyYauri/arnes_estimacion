@@ -52,6 +52,8 @@ El arnés (agente, skill, referencias, plantilla) es genérico y no se modifica 
 
 Si se tiene el detalle por módulo, va una fila por módulo. Si solo se tienen totales de un aplicativo (p. ej. "40 módulos, 30.000 LOC, 120 pantallas"), va **una sola fila** con esos totales y la cantidad en "Módulos (n)": el arnés mide la complejidad por módulo promedio y parte la construcción en lotes para trabajar en paralelo.
 
+**Microfronts y microservicios**: cada microfront y cada microservicio es un aplicativo destino propio (p. ej. un CRM con 4 microfronts y 8 microservicios = 12 aplicativos), con su fila en el Inventario y su nombre en "Aplicativo destino". Si uno de ellos tiene varios componentes, va una fila por componente con el mismo aplicativo destino.
+
 **Un origen, varios destinos**: el mapeo origen → destino viene en el pedido o en el documento de la solicitud (p. ej. front ASP.NET → Angular y back .NET Framework → .NET 8, o .NET → Java). Se carga una fila por destino con el mismo "Aplicativo origen" y las cantidades que le tocan a cada uno según ese documento. El arnés no define el mapeo por su cuenta.
 
 | Columna | Nivel | Nota |

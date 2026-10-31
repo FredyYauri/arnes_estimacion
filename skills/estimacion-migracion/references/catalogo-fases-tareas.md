@@ -53,7 +53,7 @@ Prerrequisitos: TRV-01, TRV-02, TRV-04, TRV-05, TRV-06 y TRV-07 terminan antes d
 
 ## Base común por aplicativo destino
 
-Se crea cuando un aplicativo destino recibe ≥2 componentes o es **Nuevo**. Ola = la primera ola que usa ese aplicativo. Componente = `Base común <aplicativo>`.
+Se crea cuando un aplicativo destino recibe ≥ 2 componentes. Un aplicativo de un solo componente (p. ej. un microfront o un microservicio, aunque sea Nuevo) se prepara con CO-01. Ola = la primera ola que usa ese aplicativo. Componente = `Base común <aplicativo>`.
 
 | Código | Fase | Tarea |
 |---|---|---|
