@@ -55,7 +55,7 @@ Todo el cálculo lo hacen los [scripts del arnés](./scripts/README.md); el agen
 10. **Pre-validar**: `scripts/4-Validar-Planning.ps1` ejecuta los controles de [validaciones](./references/validaciones.md). Si algo queda en REVISAR, corregir la causa en `asignacion.json` (reasignar, reordenar o mover la oleada) y volver al paso 7.
 11. **Generar el Excel**: `scripts/6-Generar-Excel.ps1` escribe `estimacion_<slug>.xlsx` replicando la estructura del [modelo de salida](./assets/Ejemplos%20Salidas/Ejemplo_proyecto.xlsx): 10 hojas, fórmulas vivas (SUMIF/WORKDAY/COUNTIF), nombres `FechaInicio` y `Feriados`, formatos condicionales por fase y por carga. Si sale con código 5, el usuario editó el Excel: mostrarle `_trabajo/cambios_manuales.json` y preguntar si conserva (`5-Detectar-Cambios.ps1 -Aplicar` y repetir pasos 7 a 11) o descarta (`-DescartarCambios`). Nunca regenerar sobre cambios del usuario sin su respuesta.
 12. **Validar el archivo final**: el script recalcula, lee la hoja Validaciones e informa cuántas quedan en REVISAR; toda REVISAR debe quedar justificada en la columna Detalle.
-13. **Informar** al usuario: KPIs, rango de la estimación, equipo, oleadas e hitos, validaciones, supuestos clave, información faltante y preguntas abiertas.
+13. **Informar** al usuario: KPIs (horas y días-persona = horas ÷ jornada), rango de la estimación, equipo, oleadas e hitos, validaciones, supuestos clave, información faltante y preguntas abiertas.
 
 ## Reglas que nunca se rompen
 

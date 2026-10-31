@@ -446,23 +446,28 @@ try {
     $kpi.Add(@('Componentes', "=COUNTA('Estrategia de oleadas'!C4:C$fEO)"))
     foreach ($pl in @($WBS.componentes | ForEach-Object { $_.plataforma } | Sort-Object -Unique)) { $kpi.Add(@("  $pl", "=COUNTIF('Estrategia de oleadas'!F4:F$fEO,`"$pl`")")) }
     $kpi.Add(@('Olas', @($WBS.componentes | ForEach-Object { $_.ola } | Where-Object { $_ } | Sort-Object -Unique).Count))
-    $kpi.Add(@('Duración (días hábiles)', "=$hP!B3")); $kpi.Add(@('Duración (semanas)', "=$hP!B4")); $kpi.Add(@('Horas totales', "=$hP!B2"))
+    $kpi.Add(@('Duración (días hábiles)', "=$hP!B3")); $kpi.Add(@('Duración (semanas)', "=$hP!B4")); $kpi.Add(@('Horas totales', "=$hP!B2")); $kpi.Add(@('Días-persona (horas ÷ jornada)', '=ROUND(E{TOT}/$B$11,1)'))
     foreach ($o in @('Paramétrica', 'Entrada', 'Asumida', 'Contingencia')) { $kpi.Add(@("  Horas $o", "=SUMIF($dhR,`"$o`",$dhM)")) }
     $kpi.Add(@('Rango optimista (h)', '=ROUND(E{TOT}*0.9,0)')); $kpi.Add(@('Rango pesimista (h)', "=ROUND(E{TOT}*$(1 + $r0),0)"))
+    $kpi.Add(@('Rango optimista (días-persona)', '=ROUND(E{TOT}*0.9/$B$11,1)')); $kpi.Add(@('Rango pesimista (días-persona)', "=ROUND(E{TOT}*$(1 + $r0)/`$B`$11,1)"))
     $kpi.Add(@('Máx. h de un recurso en un día', "=MAX($hP!K2:${LC}$($nR + 1))")); $kpi.Add(@('Días sin carga en ventanas (devs)', (@($VAL | Where-Object { $_.n -eq 15 })[0]).valor))
     $fTot = 0; for ($i = 0; $i -lt $kpi.Count; $i++) { if ($kpi[$i][0] -eq 'Horas totales') { $fTot = 4 + $i } }
     for ($i = 0; $i -lt $kpi.Count; $i++) { $v = $kpi[$i][1]; if ($v -is [string]) { $v = $v.Replace('{TOT}', [string]$fTot) }; Set-Row $ws (4 + $i) 4 @($kpi[$i][0], $v) }
-    Style-Borders $ws 4 4 (3 + $kpi.Count) 5; $ws.Range("E4:E$(3 + $kpi.Count)").NumberFormat = '#,##0'
-    Style-Header $ws 3 7 @('Recurso', 'Horas', '% participación', 'Día inicio', 'Día fin')
+    Style-Borders $ws 4 4 (3 + $kpi.Count) 5; $ws.Range("E4:E$(3 + $kpi.Count)").NumberFormat = '#,##0.#'
+    Style-Header $ws 3 7 @('Recurso', 'Horas', '% participación', 'Día inicio', 'Día fin', 'Días-persona')
     $fila = 4
-    foreach ($r in $RECS) { Set-Row $ws $fila 7 @($r.nombre, "=SUMIF($rI,G$fila,$rJ)", "=IFERROR(H$fila/H$(4 + $RECS.Count),0)", "=$($iniRec[$r.nombre])", "=$($finRec[$r.nombre])"); $fila++ }
-    Set-Row $ws $fila 7 @('Total', "=SUM(H4:H$($fila - 1))"); $ws.Range("I4:I$fila").NumberFormat = '0%'; Style-Borders $ws 4 7 $fila 11
+    foreach ($r in $RECS) { Set-Row $ws $fila 7 @($r.nombre, "=SUMIF($rI,G$fila,$rJ)", "=IFERROR(H$fila/H$(4 + $RECS.Count),0)", "=$($iniRec[$r.nombre])", "=$($finRec[$r.nombre])", "=ROUND(H$fila/`$B`$11,1)"); $fila++ }
+    Set-Row $ws $fila 7 @('Total', "=SUM(H4:H$($fila - 1))", '', '', '', "=ROUND(H$fila/`$B`$11,1)"); $ws.Range("I4:I$fila").NumberFormat = '0%'; $ws.Range("L4:L$fila").NumberFormat = '#,##0.0'; Style-Borders $ws 4 7 $fila 12
     $fila = [Math]::Max($fila, [Math]::Max(3 + $kpi.Count, 15)) + 2
     Style-Sub $ws $fila 'Horas por componente'; $fila++
     Style-Header $ws $fila 1 @('Componente', 'Aplicativo origen', 'Ola', 'Plataforma', 'Aplicativo destino', 'Horas base', 'Horas finales'); $fila++
     $fi = $fila
     foreach ($c in $WBS.componentes) { Set-Row $ws $fila 1 @($c.id, $c.aplicativoOrigen, $c.ola, $c.plataforma, $c.aplicativo, "=SUMIF($dhB,A$fila,$dhK)", "=SUMIF($dhB,A$fila,$dhM)"); if ($colorDe.ContainsKey($c.aplicativoOrigen)) { Fill $ws $fila 2 $colorDe[$c.aplicativoOrigen] }; $fila++ }
     Style-Borders $ws $fi 1 ($fila - 1) 7
+    $fila++; Style-Sub $ws $fila 'Esfuerzo por fase'; $fila++; Style-Header $ws $fila 1 @('Fase', 'Horas', 'Días-persona'); $fila++; $fi = $fila
+    $rC = & $rP 'C'
+    foreach ($fa in @($TAREAS | ForEach-Object { $_.fase } | Where-Object { $_ } | Sort-Object -Unique)) { Set-Row $ws $fila 1 @($fa, "=SUMIF($rC,A$fila,$rJ)", "=ROUND(B$fila/`$B`$11,1)"); $fila++ }
+    Set-Row $ws $fila 1 @('Total', "=SUM(B${fi}:B$($fila - 1))", "=ROUND(B$fila/`$B`$11,1)"); $ws.Range("C${fi}:C$fila").NumberFormat = '#,##0.0'; Style-Borders $ws $fi 1 $fila 3; $fila++
     $fila++; Style-Sub $ws $fila 'Horas por aplicativo origen'; $fila++; Style-Header $ws $fila 1 @('Aplicativo origen', 'Horas'); $fila++; $fi = $fila
     foreach ($l in $LEY) { Set-Row $ws $fila 1 @($l.aplicativoOrigen, "=SUMIF($rD,A$fila,$rJ)"); Fill $ws $fila 1 $l.color; $fila++ }
     Style-Borders $ws $fi 1 ($fila - 1) 2
